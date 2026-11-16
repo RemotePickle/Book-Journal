@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Meine Bücher</title>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <!--Für iphone-->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#4f6b5a">
+
+    <!-- iPhone / iOS PWA-Optimierung -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Bibliothek">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+
+</head>
+
+<body>
+
+<header>
+    <div>
+        <p class="eyebrow">Meine Bibliothek</p>
+        <h1>Meine Bücher</h1>
+    </div>
+
+    <button id="addBookButton" class="primary-button">
+        + Buch
+    </button>
+</header>
+
+<main>
+
+    <!-- Suche -->
+    <section class="toolbar">
+        <input
+            type="search"
+            id="searchInput"
+            placeholder="Titel oder Autor suchen..."
+        >
+
+        <select id="statusFilter">
+            <option value="all">Alle Bücher</option>
+            <option value="wishlist">Möchte ich lesen</option>
+            <option value="reading">Lese ich</option>
+            <option value="finished">Gelesen</option>
+        </select>
+    </section>
+
+
+    <!-- Kleine Übersicht -->
+    <section class="stats">
+        <div class="stat-card">
+            <span class="stat-number" id="totalBooks">0</span>
+            <span class="stat-label">Bücher</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-number" id="finishedBooks">0</span>
+            <span class="stat-label">Gelesen</span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-number" id="wishlistBooks">0</span>
+            <span class="stat-label">Leseliste</span>
+        </div>
+    </section>
+
+
+    <!-- Hier landen später unsere Bücher -->
+    <section id="bookList" class="book-grid"></section>
+
+</main>
+
+<!-- Button für Import und Export-->
+<div class="backup-bar">
+    <button type="button" id="exportButton" class="secondary-button">
+        Backup exportieren
+    </button>
+    <label class="secondary-button">
+        Backup importieren
+        <input type="file" id="importInput" accept=".json" hidden>
+    </label>
+</div>
+
+
+<!-- Dialog: Neues Buch -->
+<dialog id="bookDialog">
+
+    <form id="bookForm">
+
+        <div class="dialog-header">
+            <h2>Buch hinzufügen</h2>
+            <button type="button" id="closeDialogButton" class="icon-button">
+                ×
+            </button>
+        </div>
+<!-- Cover Section -->
+        <div class="cover-section">
+
+    <p class="field-label">Cover</p>
+
+    <label>
+        Link zum Cover
+        <input
+            id="coverUrlInput"
+            type="url"
+            placeholder="https://..."
+        >
+    </label>
+
+    <div class="cover-divider">
+        <span>oder</span>
+    </div>
+
+    <label class="file-button">
+        Bild vom Gerät auswählen
+        <input
+            id="coverFileInput"
+            type="file"
+            accept="image/*"
+        >
+    </label>
+
+    <div
+        id="coverPreviewContainer"
+        class="cover-preview-container"
+    >
+        <div id="coverPlaceholder" class="cover-placeholder">
+            Kein Cover
+        </div>
+
+        <img
+            id="coverPreview"
+            class="cover-preview"
+            alt="Cover Vorschau"
+            hidden
+        >
+    </div>
+<!-- Cover Section beendet-->
+
+
+    </div>
+
+
+        <label>
+            Titel
+            <input id="titleInput" type="text" required>
+        </label>
+
+        <label>
+            Autor
+            <input id="authorInput" type="text" required>
+        </label>
+
+        <label>
+            Status
+            <select id="bookStatusInput">
+                <option value="wishlist">Möchte ich lesen</option>
+                <option value="reading">Lese ich</option>
+                <option value="finished">Gelesen</option>
+            </select>
+        </label>
+
+        <label>
+            Bewertung
+            <select id="ratingInput">
+                <option value="0">Noch keine Bewertung</option>
+                <option value="1">★</option>
+                <option value="2">★★</option>
+                <option value="3">★★★</option>
+                <option value="4">★★★★</option>
+                <option value="5">★★★★★</option>
+            </select>
+        </label>
+
+        <label>
+            Serie
+            <input
+                id="seriesInput"
+                type="text"
+                placeholder="Optional"
+            >
+        </label>
+
+        <label>
+            Band
+            <input
+                id="volumeInput"
+                type="number"
+                min="1"
+                placeholder="Optional"
+            >
+        </label>
+
+        <label>
+            Meine Notiz
+            <textarea
+                id="notesInput"
+                rows="5"
+                placeholder="Was möchte ich zu diesem Buch festhalten?"
+            ></textarea>
+        </label>
+
+        <button type="submit" class="primary-button save-button">
+            Buch speichern
+        </button>
+
+    </form>
+
+</dialog>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
