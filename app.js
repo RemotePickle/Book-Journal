@@ -4,7 +4,7 @@ import {
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged
-} from "https://gstatic.com";
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 import {
     getFirestore,
     collection,
@@ -13,7 +13,7 @@ import {
     setDoc,
     deleteDoc,
     writeBatch
-} from "https://gstatic.com";
+} from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 
 // ==========================================
 // FIREBASE KONFIGURATION
