@@ -276,9 +276,68 @@ label {
         font-size: 12px;
     }
 
+        /* Zwei Bücher nebeneinander auf dem iPhone */
     .book-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
+
+    .book-card {
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .book-cover,
+    .book-cover-placeholder {
+        margin-bottom: 10px;
+    }
+
+    .book-card h3 {
+        font-size: 15px;
+        line-height: 1.3;
+    }
+
+    .book-card .author {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+
+    .card-badges {
+        gap: 4px;
+    }
+
+    .book-card .status,
+    .meta-pill {
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+
+    .book-card .rating {
+        font-size: 15px;
+        margin: 10px 0 6px;
+    }
+
+    .book-card .series,
+    .finished-date {
+        font-size: 12px;
+    }
+
+    .card-actions {
+        padding-top: 12px;
+        gap: 4px;
+    }
+
+    .details-button {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+
+    .edit-button,
+    .delete-button {
+        width: 30px;
+        height: 30px;
+    }
+
 }
 
 /*Cover Section im Eingabeformular*/
@@ -948,5 +1007,17 @@ label {
     margin-top: 6px;
     font-size: 13px;
     color: var(--secondary-text);
+}
+
+.meta-pill.icon-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 8px;
+}
+
+.card-badges + .series,
+.card-badges + .finished-date {
+    margin-top: 12px;
 }
 

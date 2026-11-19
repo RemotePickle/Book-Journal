@@ -706,9 +706,37 @@ function renderBooks() {
 
     bookList.innerHTML = "";
 
-        filteredBooks.forEach(book => {
+            // Kompakte SVG-Icons für die Formate
+    const formatIcons = {
+        book: `<span class="meta-pill icon-pill" title="Buch" aria-label="Buch">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+        </span>`,
+        ebook: `<span class="meta-pill icon-pill" title="eBook" aria-label="eBook">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+                <line x1="12" x2="12.01" y1="18" y2="18"/>
+            </svg>
+        </span>`,
+        audiobook: `<span class="meta-pill icon-pill" title="Hörbuch" aria-label="Hörbuch">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>
+            </svg>
+        </span>`
+    };
+
+    const langLabels = {
+        de: "Deutsch",
+        en: "Englisch",
+        it: "Italienisch"
+    };
+
+    filteredBooks.forEach(book => {
         const card = document.createElement("article");
-        const isFiveStars = Number(book.rating) === 5;
+        const ratingNum = Number(book.rating) || 0;
+        const isFiveStars = ratingNum === 5;
         card.className = isFiveStars ? "book-card favorite-card" : "book-card";
 
         let seriesText = "";
@@ -719,10 +747,25 @@ function renderBooks() {
             }
         }
 
-        // Kompakte Zusatz-Badges (Kategorie & Format)
+        // Format-Icon
+        const formatTagHtml = book.format && formatIcons[book.format] ? formatIcons[book.format] : "";
+
+        // Kategorie, Genre & Sprache
         const categoryLabel = book.category === "fiction" ? "Fiction" : book.category === "non-fiction" ? "Non-Fiction" : "";
-        const formatLabels = { book: "Buch", ebook: "eBook", audiobook: "Hörbuch" };
-        const formatLabel = book.format ? (formatLabels[book.format] || book.format) : "";
+        const genreLabel = (book.genre || "").trim();
+        const languageLabel = book.language ? (langLabels[book.language] || book.language) : "";
+
+        // Umfang (Seiten oder Hörbuch-Länge)
+        let lengthLabel = "";
+        if (book.format === "audiobook") {
+            if (book.audioHours || book.audioMinutes) {
+                const h = book.audioHours || 0;
+                const m = String(book.audioMinutes || 0).padStart(2, "0");
+                lengthLabel = `${h}:${m} Std.`;
+            }
+        } else if (book.pages) {
+            lengthLabel = `${book.pages} S.`;
+        }
 
         card.innerHTML = `
             <div class="cover-wrapper">
@@ -739,11 +782,14 @@ function renderBooks() {
 
             <div class="card-badges">
                 <span class="status">${getStatusText(book.status)}</span>
+                ${formatTagHtml}
                 ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
-                ${formatLabel ? `<span class="meta-pill">${escapeHtml(formatLabel)}</span>` : ""}
+                ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
+                ${languageLabel ? `<span class="meta-pill">${escapeHtml(languageLabel)}</span>` : ""}
+                ${lengthLabel ? `<span class="meta-pill">${escapeHtml(lengthLabel)}</span>` : ""}
             </div>
 
-            <div class="rating">${getStars(book.rating)}</div>
+            ${ratingNum > 0 ? `<div class="rating">${getStars(ratingNum)}</div>` : ""}
 
             ${seriesText ? `<div class="series">${escapeHtml(seriesText)}</div>` : ""}
             ${book.finishedDate ? `<div class="finished-date">Beendet: ${formatGermanDate(book.finishedDate)}</div>` : ""}
@@ -776,6 +822,7 @@ function renderBooks() {
 
         bookList.appendChild(card);
     });
+
 
 
     updateStats();
