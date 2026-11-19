@@ -1051,3 +1051,84 @@ label {
     border-radius: 6px;
     line-height: 1.2;
 }
+
+/* Leseliste: Filter & Zufallsgenerator */
+.tbr-controls {
+    display: grid;
+    grid-template-columns: 190px 190px 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.random-pick-box {
+    background: var(--card);
+    border: 1.5px solid var(--accent);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 28px rgba(79, 107, 90, 0.12);
+}
+
+.random-pick-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.random-pick-badge {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 4px 10px;
+    border-radius: 999px;
+}
+
+.random-pick-body {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.random-pick-cover {
+    width: 90px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.random-pick-info h3 {
+    margin: 0 0 4px;
+    font-size: 20px;
+}
+
+.random-pick-info .author {
+    margin: 0 0 10px;
+}
+
+.random-pick-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+    .tbr-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .random-pick-body {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .random-pick-actions {
+        justify-content: center;
+    }
+}

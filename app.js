@@ -87,6 +87,12 @@ const formatInput = document.getElementById("formatInput");
 const pagesFieldWrapper = document.getElementById("pagesFieldWrapper");
 const audioDurationWrapper = document.getElementById("audioDurationWrapper");
 
+const tbrCategoryFilter = document.getElementById("tbrCategoryFilter");
+const tbrGenreFilter = document.getElementById("tbrGenreFilter");
+const randomBookButton = document.getElementById("randomBookButton");
+const randomPickContainer = document.getElementById("randomPickContainer");
+
+
 let currentDetailsBookId = null;
 let bookIdToDelete = null;
 let selectedCover = "";
@@ -897,17 +903,172 @@ if (tabBooksButton && tabTbrButton && tabSeriesButton) {
 // -----------------------------
 // TBR-Ansicht (Nur "Möchte ich lesen" mit Fokus auf Notiz, Kategorie & Genre)
 // -----------------------------
+// -----------------------------
+// Leseliste (TBR): Filter & Intelligenter Zufallsgenerator
+// -----------------------------
+function updateTbrGenreOptions(allTbrBooks) {
+    if (!tbrGenreFilter) return;
+
+    const currentSelection = tbrGenreFilter.value;
+    const uniqueGenres = [...new Set(
+        allTbrBooks
+            .map(b => (b.genre || "").trim())
+            .filter(g => g !== "")
+    )].sort((a, b) => a.localeCompare(b, "de"));
+
+    tbrGenreFilter.innerHTML = `<option value="all">Alle Genres</option>`;
+    uniqueGenres.forEach(genre => {
+        const option = document.createElement("option");
+        option.value = genre;
+        option.textContent = genre;
+        tbrGenreFilter.appendChild(option);
+    });
+
+    if (uniqueGenres.includes(currentSelection)) {
+        tbrGenreFilter.value = currentSelection;
+    } else {
+        tbrGenreFilter.value = "all";
+    }
+}
+
+function getFilteredTbrBooks() {
+    const allTbrBooks = books.filter(book => book.status === "wishlist");
+    updateTbrGenreOptions(allTbrBooks);
+
+    const selectedCategory = tbrCategoryFilter ? tbrCategoryFilter.value : "all";
+    const selectedGenre = tbrGenreFilter ? tbrGenreFilter.value : "all";
+
+    return allTbrBooks.filter(book => {
+        const matchesCategory =
+            selectedCategory === "all" ||
+            book.category === selectedCategory;
+
+        const matchesGenre =
+            selectedGenre === "all" ||
+            (book.genre && book.genre.trim() === selectedGenre);
+
+        return matchesCategory && matchesGenre;
+    });
+}
+
+// Prüft, ob ein Buch als Nächstes dran ist (bei Serien nur der allererste ungelesene Band)
+function isEligibleForRandomPick(book) {
+    const seriesName = (book.series || "").trim().toLowerCase();
+    if (!seriesName) return true; // Einzelbände sind immer wählbar
+
+    // Alle Bücher dieser Serie (egal ob schon gelesen, aktuell oder auf der Leseliste)
+    const allBooksInSeries = books.filter(
+        b => (b.series || "").trim().toLowerCase() === seriesName
+    );
+
+    // Alle Bände dieser Serie, die noch NICHT gelesen wurden
+    const unreadInSeries = allBooksInSeries.filter(b => b.status !== "finished");
+    if (unreadInSeries.length === 0) return false;
+
+    // Niedrigste Bandnummer unter den ungelesenen Bänden ermitteln
+    const minUnreadVolume = Math.min(
+        ...unreadInSeries.map(b => parseFloat(b.volume) || 9999)
+    );
+
+    const bookVolume = parseFloat(book.volume) || 9999;
+    return bookVolume === minUnreadVolume;
+}
+
+function pickRandomTbrBook() {
+    if (!randomPickContainer) return;
+
+    const filteredTbr = getFilteredTbrBooks();
+    const candidates = filteredTbr.filter(isEligibleForRandomPick);
+
+    if (candidates.length === 0) {
+        randomPickContainer.innerHTML = `
+            <div class="random-pick-header">
+                <span class="random-pick-badge">Keine Auswahl möglich</span>
+                <button type="button" id="closeRandomPickBtn" class="icon-button" aria-label="Schließen">×</button>
+            </div>
+            <p style="margin: 0; color: var(--secondary-text);">
+                Für diese Filterauswahl gibt es aktuell kein passendes Buch (oder bei Serien fehlt noch ein früherer Band).
+            </p>
+        `;
+        randomPickContainer.hidden = false;
+        document.getElementById("closeRandomPickBtn").addEventListener("click", () => {
+            randomPickContainer.hidden = true;
+        });
+        return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    const chosenBook = candidates[randomIndex];
+
+    const categoryLabel = chosenBook.category === "fiction" ? "Fiction" : chosenBook.category === "non-fiction" ? "Non-Fiction" : "";
+    const genreLabel = (chosenBook.genre || "").trim();
+    const seriesText = chosenBook.series
+        ? (chosenBook.volume ? `${chosenBook.series} · Band ${chosenBook.volume}` : chosenBook.series)
+        : "";
+
+    randomPickContainer.innerHTML = `
+        <div class="random-pick-header">
+            <span class="random-pick-badge">✨ Deine nächste Lektüre</span>
+            <button type="button" id="closeRandomPickBtn" class="icon-button" aria-label="Schließen">×</button>
+        </div>
+        <div class="random-pick-body">
+            ${chosenBook.cover ? `<img class="random-pick-cover" src="${escapeHtml(chosenBook.cover)}" alt="Cover">` : ""}
+            <div class="random-pick-info">
+                <h3>${escapeHtml(chosenBook.title)}</h3>
+                ${chosenBook.author ? `<p class="author">${escapeHtml(chosenBook.author)}</p>` : ""}
+                <div class="card-badges">
+                    ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
+                    ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
+                    ${seriesText ? `<span class="meta-pill">${escapeHtml(seriesText)}</span>` : ""}
+                </div>
+                ${chosenBook.notes ? `<p class="notes">${escapeHtml(chosenBook.notes)}</p>` : ""}
+                <div class="random-pick-actions">
+                    <button type="button" id="randomDetailsBtn" class="secondary-button">Details ansehen</button>
+                    <button type="button" id="randomAgainBtn" class="primary-button">🎲 Nochmal ziehen</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    randomPickContainer.hidden = false;
+
+    document.getElementById("closeRandomPickBtn").addEventListener("click", () => {
+        randomPickContainer.hidden = true;
+    });
+    document.getElementById("randomDetailsBtn").addEventListener("click", () => {
+        showBookDetails(chosenBook.id);
+    });
+    document.getElementById("randomAgainBtn").addEventListener("click", pickRandomTbrBook);
+}
+
+if (tbrCategoryFilter) {
+    tbrCategoryFilter.addEventListener("change", () => {
+        if (randomPickContainer) randomPickContainer.hidden = true;
+        renderTbrBooks();
+    });
+}
+
+if (tbrGenreFilter) {
+    tbrGenreFilter.addEventListener("change", () => {
+        if (randomPickContainer) randomPickContainer.hidden = true;
+        renderTbrBooks();
+    });
+}
+
+if (randomBookButton) {
+    randomBookButton.addEventListener("click", pickRandomTbrBook);
+}
+
 function renderTbrBooks() {
     if (!tbrList) return;
 
-    const tbrBooks = books.filter(book => book.status === "wishlist");
+    const tbrBooks = getFilteredTbrBooks();
     tbrList.innerHTML = "";
 
     if (tbrBooks.length === 0) {
         tbrList.innerHTML = `
             <div class="empty-series-hint" style="grid-column: 1 / -1;">
-                Deine TBR-Liste ist aktuell leer.<br>
-                Füge ein neues Buch mit dem Status „Möchte ich lesen“ hinzu, um es hier zu sammeln.
+                Keine passenden Bücher auf deiner Leseliste gefunden.
             </div>
         `;
         return;
@@ -972,6 +1133,7 @@ function renderTbrBooks() {
         tbrList.appendChild(card);
     });
 }
+
 
 
 function renderSeriesOverview() {

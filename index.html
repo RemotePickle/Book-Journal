@@ -63,7 +63,7 @@
         <!-- NEU: Tab-Navigation -->
         <nav class="view-tabs">
             <button type="button" id="tabBooksButton" class="tab-button active">Alle Bücher</button>
-            <button type="button" id="tabTbrButton" class="tab-button">TBR</button>
+            <button type="button" id="tabTbrButton" class="tab-button">Leseliste</button>
             <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
         </nav>
 
@@ -114,8 +114,28 @@
 
         <!-- NEU: ANSICHT 2: TBR (To Be Read) -->
         <section id="tbrView" hidden>
+            <div class="tbr-controls">
+                <select id="tbrCategoryFilter">
+                    <option value="all">Alle Kategorien</option>
+                    <option value="fiction">Fiction</option>
+                    <option value="non-fiction">Non-Fiction</option>
+                </select>
+
+                <select id="tbrGenreFilter">
+                    <option value="all">Alle Genres</option>
+                </select>
+
+                <button type="button" id="randomBookButton" class="primary-button">
+                    🎲 Zufallsbuch ziehen
+                </button>
+            </div>
+
+            <!-- Hier erscheint das ausgeloste Buch -->
+            <div id="randomPickContainer" class="random-pick-box" hidden></div>
+
             <div id="tbrList" class="book-grid"></div>
         </section>
+
 
 
         <!-- NEU: ANSICHT 2: Serien-Übersicht -->
