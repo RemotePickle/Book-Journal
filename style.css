@@ -901,4 +901,52 @@ label {
     gap: 10px;
 }
 
+/* 5-Sterne Highlight */
+.book-card.favorite-card {
+    border: 1.5px solid #d49d27;
+    box-shadow: 0 8px 24px rgba(212, 157, 39, 0.12);
+}
+
+.cover-wrapper {
+    position: relative;
+}
+
+.favorite-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(39, 35, 31, 0.85);
+    backdrop-filter: blur(4px);
+    color: #f3c64f;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+}
+
+/* Kompakte Badges auf der Buchkarte */
+.card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.meta-pill {
+    display: inline-block;
+    background: var(--background);
+    color: var(--secondary-text);
+    border: 1px solid var(--border);
+    padding: 5px 9px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.finished-date {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--secondary-text);
+}
 

@@ -706,9 +706,10 @@ function renderBooks() {
 
     bookList.innerHTML = "";
 
-    filteredBooks.forEach(book => {
+        filteredBooks.forEach(book => {
         const card = document.createElement("article");
-        card.className = "book-card";
+        const isFiveStars = Number(book.rating) === 5;
+        card.className = isFiveStars ? "book-card favorite-card" : "book-card";
 
         let seriesText = "";
         if (book.series) {
@@ -718,19 +719,36 @@ function renderBooks() {
             }
         }
 
+        // Kompakte Zusatz-Badges (Kategorie & Format)
+        const categoryLabel = book.category === "fiction" ? "Fiction" : book.category === "non-fiction" ? "Non-Fiction" : "";
+        const formatLabels = { book: "Buch", ebook: "eBook", audiobook: "Hörbuch" };
+        const formatLabel = book.format ? (formatLabels[book.format] || book.format) : "";
+
         card.innerHTML = `
-            ${
-                book.cover
-                    ? `<img class="book-cover" src="${escapeHtml(book.cover)}" alt="Cover von ${escapeHtml(book.title)}">`
-                    : `<div class="book-cover-placeholder">Kein Cover</div>`
-            }
+            <div class="cover-wrapper">
+                ${
+                    book.cover
+                        ? `<img class="book-cover" src="${escapeHtml(book.cover)}" alt="Cover von ${escapeHtml(book.title)}">`
+                        : `<div class="book-cover-placeholder">Kein Cover</div>`
+                }
+                ${isFiveStars ? `<span class="favorite-badge">★ Favorit</span>` : ""}
+            </div>
+
             <h3>${escapeHtml(book.title)}</h3>
             ${book.author ? `<p class="author">${escapeHtml(book.author)}</p>` : ""}
-            <span class="status">${getStatusText(book.status)}</span>
+
+            <div class="card-badges">
+                <span class="status">${getStatusText(book.status)}</span>
+                ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
+                ${formatLabel ? `<span class="meta-pill">${escapeHtml(formatLabel)}</span>` : ""}
+            </div>
+
             <div class="rating">${getStars(book.rating)}</div>
+
             ${seriesText ? `<div class="series">${escapeHtml(seriesText)}</div>` : ""}
-            ${book.notes ? `<p class="notes">${escapeHtml(book.notes)}</p>` : ""}
-                        <div class="card-actions">
+            ${book.finishedDate ? `<div class="finished-date">Beendet: ${formatGermanDate(book.finishedDate)}</div>` : ""}
+
+            <div class="card-actions">
                 <button class="details-button" data-id="${book.id}">Details</button>
                 <div class="card-icon-group">
                     <button class="edit-button" data-id="${book.id}" aria-label="Buch bearbeiten" title="Bearbeiten">
@@ -756,9 +774,9 @@ function renderBooks() {
         card.querySelector(".edit-button").addEventListener("click", () => editBook(book.id));
         card.querySelector(".delete-button").addEventListener("click", () => deleteBook(book.id));
 
-
         bookList.appendChild(card);
     });
+
 
     updateStats();
     renderSeriesOverview();
