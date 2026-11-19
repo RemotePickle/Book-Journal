@@ -22,6 +22,44 @@
 
 <body>
 
+        <!-- NEU: Login-Maske (wird automatisch ausgeblendet, sobald du eingeloggt bist) -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-card">
+            <p class="eyebrow">Meine Bibliothek</p>
+            <h2>Anmelden</h2>
+            <form id="loginForm" class="auth-form">
+                <label>
+                    E-Mail
+                    <input type="email" id="loginEmail" required placeholder="deine@email.de">
+                </label>
+                <label>
+                    Passwort
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </label>
+                <p id="loginError" class="auth-error" hidden></p>
+                <button type="submit" class="primary-button">Einloggen</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DEINE BESTEHENDE APP (wird erst nach Login eingeblendet) -->
+    <div id="appContainer" hidden>
+        <header>
+            <div>
+                <p class="eyebrow">Persönliche Sammlung</p>
+                <h1>Meine Bibliothek</h1>
+            </div>
+            <div class="header-actions">
+                <button type="button" id="logoutButton" class="secondary-button">Abmelden</button>
+                <button type="button" id="addBookButton" class="primary-button">+ Buch</button>
+            </div>
+        </header>
+
+        <!-- ... HIER BLEIBT DEIN KOMPLETTES <main> UND ALLE <dialog>-ELEMENTE ... -->
+
+    </div> <!-- Schließt #appContainer direkt VOR <script> -->
+
+
 <header>
     <div>
         <p class="eyebrow">Meine Bibliothek</p>
@@ -33,59 +71,62 @@
     </button>
 </header>
 
-<main>
+    <main>
+        <!-- NEU: Tab-Navigation -->
+        <nav class="view-tabs">
+            <button type="button" id="tabBooksButton" class="tab-button active">Alle Bücher</button>
+            <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
+        </nav>
 
-    <!-- Suche -->
-    <section class="toolbar">
-        <input
-            type="search"
-            id="searchInput"
-            placeholder="Titel oder Autor suchen..."
-        >
+        <!-- ANSICHT 1: Deine bisherige Bücher-Ansicht -->
+        <section id="booksView">
+            <div class="toolbar">
+                <input type="search" id="searchInput" placeholder="Nach Titel, Autor oder Serie suchen …">
 
-        <select id="statusFilter">
-            <option value="all">Alle Bücher</option>
-            <option value="wishlist">Möchte ich lesen</option>
-            <option value="reading">Lese ich</option>
-            <option value="finished">Gelesen</option>
-        </select>
-    </section>
+                <select id="statusFilter">
+                    <option value="all">Alle Bücher</option>
+                    <option value="wishlist">Möchte ich lesen</option>
+                    <option value="reading">Lese ich</option>
+                    <option value="finished">Gelesen</option>
+                </select>
 
+                <select id="seriesFilter">
+                    <option value="all">Alle Serien</option>
+                </select>
+            </div>
 
-    <!-- Kleine Übersicht -->
-    <section class="stats">
-        <div class="stat-card">
-            <span class="stat-number" id="totalBooks">0</span>
-            <span class="stat-label">Bücher</span>
-        </div>
+            <section class="stats">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalBooks">0</span>
+                    <span class="stat-label">Bücher</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="finishedBooks">0</span>
+                    <span class="stat-label">Gelesen</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="wishlistBooks">0</span>
+                    <span class="stat-label">Leseliste</span>
+                </div>
+            </section>
 
-        <div class="stat-card">
-            <span class="stat-number" id="finishedBooks">0</span>
-            <span class="stat-label">Gelesen</span>
-        </div>
+            <section id="bookList" class="book-grid"></section>
 
-        <div class="stat-card">
-            <span class="stat-number" id="wishlistBooks">0</span>
-            <span class="stat-label">Leseliste</span>
-        </div>
-    </section>
+            <!-- Button für Import und Export-->
+            <div class="backup-bar">
+                <button type="button" id="exportButton" class="secondary-button">Backup exportieren</button>
+                <label class="secondary-button">
+                    Backup importieren
+                    <input type="file" id="importInput" accept=".json" hidden>
+                </label>
+            </div>
+        </section>
 
-
-    <!-- Hier landen später unsere Bücher -->
-    <section id="bookList" class="book-grid"></section>
-
-</main>
-
-<!-- Button für Import und Export-->
-<div class="backup-bar">
-    <button type="button" id="exportButton" class="secondary-button">
-        Backup exportieren
-    </button>
-    <label class="secondary-button">
-        Backup importieren
-        <input type="file" id="importInput" accept=".json" hidden>
-    </label>
-</div>
+        <!-- NEU: ANSICHT 2: Serien-Übersicht -->
+        <section id="seriesView" hidden>
+            <div id="seriesOverviewList" class="series-grid"></div>
+        </section>
+    </main>
 
 
 <!-- Dialog: Neues Buch -->
@@ -99,6 +140,9 @@
                 ×
             </button>
         </div>
+
+
+
 <!-- Cover Section -->
         <div class="cover-section">
 
@@ -154,7 +198,7 @@
 
         <label>
             Autor
-            <input id="authorInput" type="text" required>
+            <input id="authorInput" type="text">
         </label>
 
         <label>
@@ -197,25 +241,147 @@
             >
         </label>
 
-        <label>
-            Meine Notiz
-            <textarea
-                id="notesInput"
-                rows="5"
-                placeholder="Was möchte ich zu diesem Buch festhalten?"
-            ></textarea>
-        </label>
+                    <div class="form-row-two">
+                <label>
+                    Kategorie
+                    <select id="categoryInput">
+                        <option value="">Keine Angabe</option>
+                        <option value="fiction">Fiction</option>
+                        <option value="non-fiction">Non-Fiction</option>
+                    </select>
+                </label>
 
-        <button type="submit" class="primary-button save-button">
-            Buch speichern
-        </button>
+                <label>
+                    Genre
+                    <input type="text" id="genreInput" placeholder="z. B. Fantasy, Thriller">
+                </label>
+            </div>
+
+            <div class="form-row-two">
+                <label>
+                    Format
+                    <select id="formatInput">
+                        <option value="book">Buch</option>
+                        <option value="ebook">eBook</option>
+                        <option value="audiobook">Hörbuch</option>
+                    </select>
+                </label>
+
+                <div id="pagesFieldWrapper">
+                    <label>
+                        Seitenanzahl
+                        <input type="number" id="pagesInput" min="0" placeholder="z. B. 320">
+                    </label>
+                </div>
+
+                <div id="audioDurationWrapper" hidden>
+                    <span class="field-label">Dauer (Stunden : Minuten)</span>
+                    <div class="duration-inputs">
+                        <input type="number" id="audioHoursInput" min="0" placeholder="Std.">
+                        <input type="number" id="audioMinutesInput" min="0" max="59" placeholder="Min.">
+                    </div>
+                </div>
+            </div>
+
+            <label>
+                Sprache
+                <select id="languageInput">
+                    <option value="">Keine Angabe</option>
+                    <option value="de">Deutsch</option>
+                    <option value="en">Englisch</option>
+                    <option value="it">Italienisch</option>
+                </select>
+            </label>
+
+            <div class="form-row-two">
+                <label>
+                    Begonnen am
+                    <input type="date" id="startDateInput">
+                </label>
+
+                <label>
+                    Beendet am
+                    <input type="date" id="finishedDateInput">
+                </label>
+            </div>
+
+
+            <label>
+                Notizen
+                <textarea id="notesInput" rows="3" placeholder="Meine Gedanken zum Buch …"></textarea>
+            </label>
+
+            <label>
+                Zitate
+                <textarea id="quotesInput" rows="3" placeholder="Lieblingszitate aus dem Buch …"></textarea>
+            </label>
+
+            <button type="submit" class="primary-button save-button">Buch speichern</button>
 
     </form>
 
 </dialog>
 
+<!--Sicherheitsabfrage beim Löschen-->       
+<dialog id="deleteDialog">
+    <div class="delete-dialog-content">
+        <div class="dialog-header">
+            <h2>Buch löschen?</h2>
+            <button type="button" id="closeDeleteDialogButton" class="icon-button" aria-label="Schließen">×</button>
+        </div>
+        <p class="delete-dialog-text">
+            Möchtest du <strong id="deleteBookTitle">dieses Buch</strong> wirklich unwiderruflich aus deiner Bibliothek löschen?
+        </p>
+        <div class="delete-dialog-actions">
+            <button type="button" id="cancelDeleteButton" class="secondary-button">Abbrechen</button>
+            <button type="button" id="confirmDeleteButton" class="danger-button">Endgültig löschen</button>
+        </div>
+    </div>
+</dialog>
 
-<script src="app.js"></script>
+<!-- NEU: Dialog für Buch-Details -->
+<dialog id="detailsDialog">
+    <div class="details-dialog-content">
+        <div class="dialog-header">
+            <h2>Buchdetails</h2>
+            <button type="button" id="closeDetailsDialogButton" class="icon-button" aria-label="Schließen">×</button>
+        </div>
 
+        <div class="details-body">
+            <div class="details-top">
+                <div id="detailsCoverWrapper"></div>
+                <div class="details-main-info">
+                    <span id="detailsStatus" class="status"></span>
+                    <h3 id="detailsTitle"></h3>
+                    <p id="detailsAuthor" class="author"></p>
+                    <div id="detailsRating" class="rating"></div>
+                    <p id="detailsSeries" class="series"></p>
+                </div>
+            </div>
+
+            <div id="detailsExtraFields" class="details-meta-grid" hidden></div>
+
+            <div id="detailsNotesSection" class="details-notes-box" hidden>
+                <h4>Notizen</h4>
+                <p id="detailsNotes"></p>
+            </div>
+
+            <div id="detailsQuotesSection" class="details-notes-box details-quotes-box" hidden>
+                <h4>Zitate</h4>
+                <p id="detailsQuotes"></p>
+            </div>
+        </div>
+
+        <div class="details-actions">
+            <button type="button" id="detailsEditButton" class="secondary-button">Bearbeiten</button>
+            <button type="button" id="detailsCloseFooterButton" class="primary-button">Schließen</button>
+        </div>
+    </div>
+</dialog>
+
+
+
+    <script type="module" src="./app.js"></script>
 </body>
+
 </html>
