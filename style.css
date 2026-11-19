@@ -970,20 +970,6 @@ label {
     position: relative;
 }
 
-.favorite-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(39, 35, 31, 0.85);
-    backdrop-filter: blur(4px);
-    color: #f3c64f;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 5px 10px;
-    border-radius: 999px;
-    letter-spacing: 0.02em;
-}
-
 /* Kompakte Badges auf der Buchkarte */
 .card-badges {
     display: flex;
@@ -1021,3 +1007,47 @@ label {
     margin-top: 12px;
 }
 
+/* Halbe Sterne & DNF-Badge */
+.star-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    color: #d49d27;
+    vertical-align: middle;
+}
+
+.star-svg {
+    display: block;
+    flex-shrink: 0;
+}
+
+.star-svg.empty {
+    opacity: 0.35;
+}
+
+.half-star-wrap {
+    position: relative;
+    display: inline-flex;
+    width: 16px;
+    height: 16px;
+}
+
+.half-star-fill {
+    position: absolute;
+    inset: 0;
+    width: 50%;
+    overflow: hidden;
+}
+
+.dnf-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #9e6b21;
+    background: #fbf2de;
+    border: 1px solid #ecd6a6;
+    padding: 3px 8px;
+    border-radius: 6px;
+    line-height: 1.2;
+}

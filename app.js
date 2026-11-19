@@ -289,7 +289,9 @@ bookForm.addEventListener("submit", async (event) => {
         title: document.getElementById("titleInput").value.trim(),
         author: document.getElementById("authorInput").value.trim(),
         status: document.getElementById("bookStatusInput").value,
-        rating: Number(document.getElementById("ratingInput").value),
+        rating: document.getElementById("ratingInput").value === "dnf"
+            ? "dnf"
+            : Number(document.getElementById("ratingInput").value),
         series: document.getElementById("seriesInput").value.trim(),
         volume: document.getElementById("volumeInput").value.trim(),
         category: document.getElementById("categoryInput").value,
@@ -351,7 +353,7 @@ function editBook(id) {
     document.getElementById("titleInput").value = book.title;
     document.getElementById("authorInput").value = book.author;
     document.getElementById("bookStatusInput").value = book.status;
-    document.getElementById("ratingInput").value = book.rating;
+    document.getElementById("ratingInput").value = book.rating !== undefined ? String(book.rating) : "0";
     document.getElementById("seriesInput").value = book.series || "";
     document.getElementById("volumeInput").value = book.volume || "";
     document.getElementById("notesInput").value = book.notes || "";
@@ -446,7 +448,7 @@ function showBookDetails(id) {
     authorEl.textContent = book.author || "";
     authorEl.hidden = !book.author;
 
-    document.getElementById("detailsRating").textContent = getStars(book.rating);
+    document.getElementById("detailsRating").innerHTML = getStars(book.rating);
 
     const seriesEl = document.getElementById("detailsSeries");
     if (book.series) {
@@ -637,9 +639,31 @@ function getStatusText(status) {
 }
 
 function getStars(rating) {
-    if (rating === 0) return "Noch nicht bewertet";
-    return "★".repeat(rating) + "☆".repeat(5 - rating);
+    if (rating === "dnf") {
+        return `<span class="dnf-badge" title="Did Not Finish (Abgebrochen)">DNF</span>`;
+    }
+
+    const num = Number(rating) || 0;
+    if (num <= 0) return "";
+
+    const fullStarSvg = `<svg class="star-svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const emptyStarSvg = `<svg class="star-svg empty" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const halfStarSvg = `<span class="half-star-wrap">${emptyStarSvg}<span class="half-star-fill">${fullStarSvg}</span></span>`;
+
+    let html = `<span class="star-row" aria-label="${num} von 5 Sternen">`;
+    for (let i = 1; i <= 5; i++) {
+        if (num >= i) {
+            html += fullStarSvg;
+        } else if (num >= i - 0.5) {
+            html += halfStarSvg;
+        } else {
+            html += emptyStarSvg;
+        }
+    }
+    html += `</span>`;
+    return html;
 }
+
 
 function updateSeriesFilterOptions() {
     if (!seriesFilter) return;
@@ -735,8 +759,10 @@ function renderBooks() {
 
     filteredBooks.forEach(book => {
         const card = document.createElement("article");
-        const ratingNum = Number(book.rating) || 0;
+        const isDnf = book.rating === "dnf";
+        const ratingNum = isDnf ? 0 : (Number(book.rating) || 0);
         const isFiveStars = ratingNum === 5;
+
         card.className = isFiveStars ? "book-card favorite-card" : "book-card";
 
         let seriesText = "";
@@ -774,7 +800,6 @@ function renderBooks() {
                         ? `<img class="book-cover" src="${escapeHtml(book.cover)}" alt="Cover von ${escapeHtml(book.title)}">`
                         : `<div class="book-cover-placeholder">Kein Cover</div>`
                 }
-                ${isFiveStars ? `<span class="favorite-badge">★ Favorit</span>` : ""}
             </div>
 
             <h3>${escapeHtml(book.title)}</h3>
@@ -789,7 +814,7 @@ function renderBooks() {
                 ${lengthLabel ? `<span class="meta-pill">${escapeHtml(lengthLabel)}</span>` : ""}
             </div>
 
-            ${ratingNum > 0 ? `<div class="rating">${getStars(ratingNum)}</div>` : ""}
+            ${(ratingNum > 0 || isDnf) ? `<div class="rating">${getStars(book.rating)}</div>` : ""}
 
             ${seriesText ? `<div class="series">${escapeHtml(seriesText)}</div>` : ""}
             ${book.finishedDate ? `<div class="finished-date">Beendet: ${formatGermanDate(book.finishedDate)}</div>` : ""}
