@@ -70,9 +70,12 @@ const cancelDeleteButton = document.getElementById("cancelDeleteButton");
 const confirmDeleteButton = document.getElementById("confirmDeleteButton");
 
 const tabBooksButton = document.getElementById("tabBooksButton");
+const tabTbrButton = document.getElementById("tabTbrButton");
 const tabSeriesButton = document.getElementById("tabSeriesButton");
 const booksView = document.getElementById("booksView");
+const tbrView = document.getElementById("tbrView");
 const seriesView = document.getElementById("seriesView");
+const tbrList = document.getElementById("tbrList");
 const seriesOverviewList = document.getElementById("seriesOverviewList");
 
 const detailsDialog = document.getElementById("detailsDialog");
@@ -703,6 +706,9 @@ function renderBooks() {
     const selectedSeries = seriesFilter ? seriesFilter.value : "all";
 
     let filteredBooks = books.filter(book => {
+        // TBR-Bücher ("wishlist") gehören ausschließlich in den TBR-Tab
+        if (book.status === "wishlist") return false;
+
         const matchesSearch =
             book.title.toLowerCase().includes(searchTerm) ||
             book.author.toLowerCase().includes(searchTerm) ||
@@ -718,6 +724,7 @@ function renderBooks() {
 
         return matchesSearch && matchesStatus && matchesSeries;
     });
+
 
     // Wenn eine Serie gewählt ist: Bände automatisch aufsteigend sortieren (Band 1, 2, 3...)
     if (selectedSeries !== "all") {
@@ -851,7 +858,9 @@ function renderBooks() {
 
 
     updateStats();
+    renderTbrBooks();
     renderSeriesOverview();
+
 }
 
 
@@ -862,24 +871,108 @@ function updateStats() {
 }
 
 // -----------------------------
-// Tab-Umschaltung & Serien-Übersicht
+// Tab-Umschaltung (Alle Bücher / TBR / Serien)
 // -----------------------------
-if (tabBooksButton && tabSeriesButton) {
-    tabBooksButton.addEventListener("click", () => {
-        tabBooksButton.classList.add("active");
-        tabSeriesButton.classList.remove("active");
-        booksView.hidden = false;
-        seriesView.hidden = true;
-    });
+function switchView(activeView) {
+    if (!booksView || !tbrView || !seriesView) return;
 
-    tabSeriesButton.addEventListener("click", () => {
-        tabSeriesButton.classList.add("active");
-        tabBooksButton.classList.remove("active");
-        booksView.hidden = true;
-        seriesView.hidden = false;
-        renderSeriesOverview();
+    tabBooksButton.classList.toggle("active", activeView === "books");
+    tabTbrButton.classList.toggle("active", activeView === "tbr");
+    tabSeriesButton.classList.toggle("active", activeView === "series");
+
+    booksView.hidden = activeView !== "books";
+    tbrView.hidden = activeView !== "tbr";
+    seriesView.hidden = activeView !== "series";
+
+    if (activeView === "tbr") renderTbrBooks();
+    if (activeView === "series") renderSeriesOverview();
+}
+
+if (tabBooksButton && tabTbrButton && tabSeriesButton) {
+    tabBooksButton.addEventListener("click", () => switchView("books"));
+    tabTbrButton.addEventListener("click", () => switchView("tbr"));
+    tabSeriesButton.addEventListener("click", () => switchView("series"));
+}
+
+// -----------------------------
+// TBR-Ansicht (Nur "Möchte ich lesen" mit Fokus auf Notiz, Kategorie & Genre)
+// -----------------------------
+function renderTbrBooks() {
+    if (!tbrList) return;
+
+    const tbrBooks = books.filter(book => book.status === "wishlist");
+    tbrList.innerHTML = "";
+
+    if (tbrBooks.length === 0) {
+        tbrList.innerHTML = `
+            <div class="empty-series-hint" style="grid-column: 1 / -1;">
+                Deine TBR-Liste ist aktuell leer.<br>
+                Füge ein neues Buch mit dem Status „Möchte ich lesen“ hinzu, um es hier zu sammeln.
+            </div>
+        `;
+        return;
+    }
+
+    tbrBooks.forEach(book => {
+        const card = document.createElement("article");
+        card.className = "book-card";
+
+        const categoryLabel = book.category === "fiction" ? "Fiction" : book.category === "non-fiction" ? "Non-Fiction" : "";
+        const genreLabel = (book.genre || "").trim();
+
+        card.innerHTML = `
+            <div class="cover-wrapper">
+                ${
+                    book.cover
+                        ? `<img class="book-cover" src="${escapeHtml(book.cover)}" alt="Cover von ${escapeHtml(book.title)}">`
+                        : `<div class="book-cover-placeholder">Kein Cover</div>`
+                }
+            </div>
+
+            <h3>${escapeHtml(book.title)}</h3>
+            ${book.author ? `<p class="author">${escapeHtml(book.author)}</p>` : ""}
+
+            ${
+                (categoryLabel || genreLabel)
+                    ? `<div class="card-badges">
+                        ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
+                        ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
+                       </div>`
+                    : ""
+            }
+
+            ${book.notes ? `<p class="notes">${escapeHtml(book.notes)}</p>` : ""}
+
+            <div class="card-actions">
+                <button class="details-button" data-id="${book.id}">Details</button>
+                <div class="card-icon-group">
+                    <button class="edit-button" data-id="${book.id}" aria-label="Buch bearbeiten" title="Bearbeiten">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                            <path d="m15 5 4 4"/>
+                        </svg>
+                    </button>
+                    <button class="delete-button" data-id="${book.id}" aria-label="Buch löschen" title="Löschen">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            <line x1="10" x2="10" y1="11" y2="17"/>
+                            <line x1="14" x2="14" y1="11" y2="17"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        card.querySelector(".details-button").addEventListener("click", () => showBookDetails(book.id));
+        card.querySelector(".edit-button").addEventListener("click", () => editBook(book.id));
+        card.querySelector(".delete-button").addEventListener("click", () => deleteBook(book.id));
+
+        tbrList.appendChild(card);
     });
 }
+
 
 function renderSeriesOverview() {
     if (!seriesOverviewList) return;

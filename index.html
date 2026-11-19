@@ -63,8 +63,10 @@
         <!-- NEU: Tab-Navigation -->
         <nav class="view-tabs">
             <button type="button" id="tabBooksButton" class="tab-button active">Alle Bücher</button>
+            <button type="button" id="tabTbrButton" class="tab-button">TBR</button>
             <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
         </nav>
+
 
         <!-- ANSICHT 1: Deine bisherige Bücher-Ansicht -->
         <section id="booksView">
@@ -72,11 +74,11 @@
                 <input type="search" id="searchInput" placeholder="Nach Titel, Autor oder Serie suchen …">
 
                 <select id="statusFilter">
-                    <option value="all">Alle Bücher</option>
-                    <option value="wishlist">Möchte ich lesen</option>
-                    <option value="reading">Lese ich</option>
+                    <option value="all">Gelesen & Aktuell</option>
                     <option value="finished">Gelesen</option>
+                    <option value="reading">Lese ich</option>
                 </select>
+
 
                 <select id="seriesFilter">
                     <option value="all">Alle Serien</option>
@@ -109,6 +111,12 @@
                 </label>
             </div>
         </section>
+
+        <!-- NEU: ANSICHT 2: TBR (To Be Read) -->
+        <section id="tbrView" hidden>
+            <div id="tbrList" class="book-grid"></div>
+        </section>
+
 
         <!-- NEU: ANSICHT 2: Serien-Übersicht -->
         <section id="seriesView" hidden>
