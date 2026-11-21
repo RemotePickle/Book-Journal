@@ -635,7 +635,7 @@ label {
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 10px;
+    gap: 3px;
 }
 
 .series-book-item {
@@ -1153,18 +1153,18 @@ label.checkbox-field input[type="checkbox"] {
     cursor: pointer;
 }
 
-/* Erweiterte Filterleisten (4 kompakte Spalten nebeneinander) */
+/* Erweiterte Filterleisten (5 kompakte Spalten nebeneinander am Desktop) */
 .toolbar {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) 160px 150px 175px;
-    gap: 10px;
+    grid-template-columns: minmax(150px, 1fr) 150px 140px 160px 175px;
+    gap: 8px;
     margin-bottom: 18px;
 }
 
 .tbr-controls {
     display: grid;
-    grid-template-columns: 155px 155px 175px auto;
-    gap: 10px;
+    grid-template-columns: 145px 145px 160px 175px auto;
+    gap: 8px;
     margin-bottom: 20px;
     align-items: center;
 }
@@ -1183,7 +1183,7 @@ label.checkbox-field input[type="checkbox"] {
 /* Anklickbare Bücher in der Serien-Übersicht */
 .clickable-series-book {
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 3px 8px;
     margin: 0 -8px;
     border-radius: 8px;
     transition: background-color 0.15s ease;

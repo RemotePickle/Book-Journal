@@ -100,6 +100,9 @@ const releaseYearWrapper = document.getElementById("releaseYearWrapper");
 const fanfictionFilter = document.getElementById("fanfictionFilter");
 const tbrFanfictionFilter = document.getElementById("tbrFanfictionFilter");
 
+const sortOrderFilter = document.getElementById("sortOrderFilter");
+const tbrSortOrderFilter = document.getElementById("tbrSortOrderFilter");
+
 let currentDetailsBookId = null;
 let bookIdToDelete = null;
 let selectedCover = "";
@@ -909,6 +912,8 @@ function renderBooks() {
     });
 
 
+        const selectedSort = sortOrderFilter ? sortOrderFilter.value : "newest";
+
     // Wenn eine Serie gewählt ist: Bände automatisch aufsteigend sortieren (Band 1, 2, 3...)
     if (selectedSeries !== "all") {
         filteredBooks.sort((a, b) => {
@@ -916,7 +921,36 @@ function renderBooks() {
             const volB = parseFloat(b.volume) || 9999;
             return volA - volB;
         });
+    } else {
+        filteredBooks.sort((a, b) => {
+            if (selectedSort === "finished-desc") {
+                if (!a.finishedDate && !b.finishedDate) return 0;
+                if (!a.finishedDate) return 1;
+                if (!b.finishedDate) return -1;
+                return b.finishedDate.localeCompare(a.finishedDate);
+            }
+            if (selectedSort === "finished-asc") {
+                if (!a.finishedDate && !b.finishedDate) return 0;
+                if (!a.finishedDate) return 1;
+                if (!b.finishedDate) return -1;
+                return a.finishedDate.localeCompare(b.finishedDate);
+            }
+            if (selectedSort === "rating-desc") {
+                const rA = a.rating === "dnf" ? -1 : (Number(a.rating) || 0);
+                const rB = b.rating === "dnf" ? -1 : (Number(b.rating) || 0);
+                return rB - rA;
+            }
+            if (selectedSort === "title-asc") {
+                return (a.title || "").localeCompare(b.title || "", "de");
+            }
+            if (selectedSort === "author-asc") {
+                return (a.author || "zzz").localeCompare(b.author || "zzz", "de");
+            }
+            // Standard ("newest"): zuletzt hinzugefügte zuerst
+            return (b.createdAt || 0) - (a.createdAt || 0);
+        });
     }
+
 
     bookList.innerHTML = "";
 
@@ -1120,7 +1154,9 @@ function getFilteredTbrBooks() {
     const selectedFanfiction = tbrFanfictionFilter ? tbrFanfictionFilter.value : "all";
 
 
-    return allTbrBooks.filter(book => {
+        const selectedTbrSort = tbrSortOrderFilter ? tbrSortOrderFilter.value : "newest";
+
+    const filtered = allTbrBooks.filter(book => {
         const matchesCategory =
             selectedCategory === "all" ||
             book.category === selectedCategory;
@@ -1135,8 +1171,26 @@ function getFilteredTbrBooks() {
             (selectedFanfiction === "no" && !book.isFanfiction);
 
         return matchesCategory && matchesGenre && matchesFanfiction;
-
     });
+
+    filtered.sort((a, b) => {
+        if (selectedTbrSort === "release-asc") {
+            if (!a.releaseDate && !b.releaseDate) return 0;
+            if (!a.releaseDate) return 1; // Bücher ohne Datum nach hinten
+            if (!b.releaseDate) return -1;
+            return a.releaseDate.localeCompare(b.releaseDate);
+        }
+        if (selectedTbrSort === "title-asc") {
+            return (a.title || "").localeCompare(b.title || "", "de");
+        }
+        if (selectedTbrSort === "author-asc") {
+            return (a.author || "zzz").localeCompare(b.author || "zzz", "de");
+        }
+        return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+    return filtered;
+
 }
 
 // Prüft, ob ein Buch als Nächstes dran ist (bei Serien nur der allererste ungelesene Band)
@@ -1417,6 +1471,9 @@ if (seriesFilter) {
 if (fanfictionFilter) {
     fanfictionFilter.addEventListener("change", renderBooks);
 }
+if (sortOrderFilter) {
+    sortOrderFilter.addEventListener("change", renderBooks);
+}
 
 if (tbrFanfictionFilter) {
     tbrFanfictionFilter.addEventListener("change", () => {
@@ -1424,6 +1481,10 @@ if (tbrFanfictionFilter) {
         renderTbrBooks();
     });
 }
+if (tbrSortOrderFilter) {
+    tbrSortOrderFilter.addEventListener("change", renderTbrBooks);
+}
+
 
 
 function escapeHtml(text) {
