@@ -1410,3 +1410,70 @@ label.checkbox-field input[type="checkbox"] {
     }
 }
 
+/* Vertikales Säulendiagramm (Bewertungen) */
+.column-chart {
+    display: grid;
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+    gap: 6px;
+    align-items: end;
+    height: 175px;
+    padding-top: 22px;
+}
+
+.col-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.col-bar-area {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.col-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1;
+}
+
+.col-count.zero {
+    color: var(--secondary-text);
+    opacity: 0.45;
+}
+
+.col-bar {
+    width: 100%;
+    max-width: 24px;
+    background: #d49d27;
+    border-radius: 6px 6px 2px 2px;
+    min-height: 3px;
+    transition: height 0.3s ease;
+}
+
+.col-bar.dnf {
+    background: #a44;
+}
+
+.col-bar.empty {
+    background: var(--border);
+    opacity: 0.5;
+}
+
+.col-label {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--secondary-text);
+    text-align: center;
+    line-height: 1.1;
+}
+

@@ -1609,6 +1609,74 @@ function buildDonutPanelHtml(title, entries, totalCount) {
     `;
 }
 
+function buildRatingColumnChartHtml(finishedBooks) {
+    const slots = [
+        { key: "dnf", label: "DNF", isDnf: true },
+        { key: "0.5", label: "0,5" },
+        { key: "1", label: "1" },
+        { key: "1.5", label: "1,5" },
+        { key: "2", label: "2" },
+        { key: "2.5", label: "2,5" },
+        { key: "3", label: "3" },
+        { key: "3.5", label: "3,5" },
+        { key: "4", label: "4" },
+        { key: "4.5", label: "4,5" },
+        { key: "5", label: "5 ★" }
+    ];
+
+    const counts = new Map(slots.map(s => [s.key, 0]));
+    let unratedCount = 0;
+
+    finishedBooks.forEach(b => {
+        if (b.rating === "dnf") {
+            counts.set("dnf", counts.get("dnf") + 1);
+        } else {
+            const num = Number(b.rating) || 0;
+            if (num > 0) {
+                const key = String(num);
+                if (counts.has(key)) {
+                    counts.set(key, counts.get(key) + 1);
+                }
+            } else {
+                unratedCount++;
+            }
+        }
+    });
+
+    const maxCount = Math.max(...counts.values(), 1);
+
+    const columnsHtml = slots.map(slot => {
+        const count = counts.get(slot.key) || 0;
+        const heightPercent = count > 0 ? Math.max(Math.round((count / maxCount) * 100), 8) : 2;
+        const barClasses = [
+            "col-bar",
+            slot.isDnf ? "dnf" : "",
+            count === 0 ? "empty" : ""
+        ].filter(Boolean).join(" ");
+
+        return `
+            <div class="col-item" title="${slot.label}: ${count} Bücher">
+                <div class="col-bar-area">
+                    <span class="col-count ${count === 0 ? "zero" : ""}">${count}</span>
+                    <div class="${barClasses}" style="height: ${heightPercent}%"></div>
+                </div>
+                <span class="col-label">${escapeHtml(slot.label)}</span>
+            </div>
+        `;
+    }).join("");
+
+    const unratedHint = unratedCount > 0
+        ? `<span style="font-size: 12px; font-weight: 500; color: var(--secondary-text);"> · ${unratedCount} ohne Bewertung</span>`
+        : "";
+
+    return `
+        <div class="stats-panel">
+            <h3>Bewertungen${unratedHint}</h3>
+            <div class="column-chart">${columnsHtml}</div>
+        </div>
+    `;
+}
+
 
 function renderStatisticsPage() {
     if (!statsDashboard) return;
@@ -1735,14 +1803,15 @@ function renderStatisticsPage() {
             return parseFloat(b.label.replace(",", ".")) - parseFloat(a.label.replace(",", "."));
         });
 
-    // Erscheinungs-Jahrzehnte
+    // Erscheinungs-Jahrzehnte (inkl. "Keine Angabe", damit der Kreis 100 % ergibt)
     const decadeEntries = countBy(finishedBooks, b => {
         const y = Number(b.releaseYear);
-        if (!y) return null;
+        if (!y) return "Keine Angabe";
         if (y < 1980) return "Vor 1980";
         const decade = Math.floor(y / 10) * 10;
         return `${decade}er`;
     });
+
 
     // 3. HTML zusammensetzen
     statsDashboard.innerHTML = `
@@ -1778,7 +1847,7 @@ function renderStatisticsPage() {
             ${buildDonutPanelHtml("Fiction vs. Non-Fiction", categoryEntries, finishedBooks.length)}
             ${buildDonutPanelHtml("Formate", formatEntries, finishedBooks.length)}
             ${buildDonutPanelHtml("Sprachen", langEntries, finishedBooks.length)}
-            ${buildBarPanelHtml("Bewertungen", ratingEntries, finishedBooks.length, true)}
+            ${buildRatingColumnChartHtml(finishedBooks)}
             ${buildDonutPanelHtml("Erscheinungsjahrzehnte", decadeEntries, finishedBooks.length)}
         </div>
 
