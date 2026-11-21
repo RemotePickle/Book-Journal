@@ -52,7 +52,11 @@ const bookForm = document.getElementById("bookForm");
 const bookList = document.getElementById("bookList");
 
 const searchInput = document.getElementById("searchInput");
-const statusFilter = document.getElementById("statusFilter");
+const categoryFilter = document.getElementById("categoryFilter");
+const genreFilter = document.getElementById("genreFilter");
+const tabReadingButton = document.getElementById("tabReadingButton");
+const readingView = document.getElementById("readingView");
+const readingList = document.getElementById("readingList");
 const seriesFilter = document.getElementById("seriesFilter");
 
 const exportButton = document.getElementById("exportButton");
@@ -108,6 +112,17 @@ const statsView = document.getElementById("statsView");
 const statsYearFilter = document.getElementById("statsYearFilter");
 const statsFanfictionFilter = document.getElementById("statsFanfictionFilter");
 const statsDashboard = document.getElementById("statsDashboard");
+
+const tabAuthorsButton = document.getElementById("tabAuthorsButton");
+const authorsView = document.getElementById("authorsView");
+const authorSearchInput = document.getElementById("authorSearchInput");
+const authorsOverviewList = document.getElementById("authorsOverviewList");
+
+const authorTbrDialog = document.getElementById("authorTbrDialog");
+const authorTbrDialogTitle = document.getElementById("authorTbrDialogTitle");
+const authorTbrBookList = document.getElementById("authorTbrBookList");
+const closeAuthorTbrDialogButton = document.getElementById("closeAuthorTbrDialogButton");
+
 
 let currentDetailsBookId = null;
 let bookIdToDelete = null;
@@ -890,28 +905,57 @@ function updateSeriesFilterOptions() {
     }
 }
 
+function updateBooksGenreOptions(finishedBooksOnly) {
+    if (!genreFilter) return;
+
+    const currentSelection = genreFilter.value;
+    const uniqueGenres = [...new Set(
+        finishedBooksOnly
+            .map(b => (b.genre || "").trim())
+            .filter(g => g !== "")
+    )].sort((a, b) => a.localeCompare(b, "de"));
+
+    genreFilter.innerHTML = `<option value="all">Alle Genres</option>`;
+    uniqueGenres.forEach(genre => {
+        const option = document.createElement("option");
+        option.value = genre;
+        option.textContent = genre;
+        genreFilter.appendChild(option);
+    });
+
+    if (uniqueGenres.includes(currentSelection)) {
+        genreFilter.value = currentSelection;
+    } else {
+        genreFilter.value = "all";
+    }
+}
+
 
 function renderBooks() {
     updateSeriesFilterOptions();
 
+    const finishedBooksOnly = books.filter(b => b.status === "finished");
+    updateBooksGenreOptions(finishedBooksOnly);
+
     const searchTerm = searchInput.value.toLowerCase();
-    const selectedStatus = statusFilter.value;
+    const selectedCategory = categoryFilter ? categoryFilter.value : "all";
+    const selectedGenre = genreFilter ? genreFilter.value : "all";
     const selectedSeries = seriesFilter ? seriesFilter.value : "all";
     const selectedFanfiction = fanfictionFilter ? fanfictionFilter.value : "all";
 
-
-    let filteredBooks = books.filter(book => {
-        // TBR-Bücher ("wishlist") gehören ausschließlich in den TBR-Tab
-        if (book.status === "wishlist") return false;
-
+    let filteredBooks = finishedBooksOnly.filter(book => {
         const matchesSearch =
             book.title.toLowerCase().includes(searchTerm) ||
             book.author.toLowerCase().includes(searchTerm) ||
             (book.series && book.series.toLowerCase().includes(searchTerm));
 
-        const matchesStatus =
-            selectedStatus === "all" ||
-            book.status === selectedStatus;
+        const matchesCategory =
+            selectedCategory === "all" ||
+            book.category === selectedCategory;
+
+        const matchesGenre =
+            selectedGenre === "all" ||
+            (book.genre && book.genre.trim() === selectedGenre);
 
         const matchesSeries =
             selectedSeries === "all" ||
@@ -922,8 +966,7 @@ function renderBooks() {
             (selectedFanfiction === "only" && Boolean(book.isFanfiction)) ||
             (selectedFanfiction === "no" && !book.isFanfiction);
 
-        return matchesSearch && matchesStatus && matchesSeries && matchesFanfiction;
-
+        return matchesSearch && matchesCategory && matchesGenre && matchesSeries && matchesFanfiction;
     });
 
 
@@ -1090,11 +1133,11 @@ function renderBooks() {
         bookList.appendChild(card);
     });
 
-
-
     updateStats();
+    renderReadingBooks();
     renderTbrBooks();
     renderSeriesOverview();
+    renderAuthorsOverview();
     renderStatisticsPage();
 }
 
@@ -1109,29 +1152,127 @@ function updateStats() {
 // Tab-Umschaltung (Alle Bücher / TBR / Serien)
 // -----------------------------
 function switchView(activeView) {
-    if (!booksView || !tbrView || !seriesView || !statsView) return;
+    if (!booksView || !readingView || !tbrView || !seriesView || !authorsView || !statsView) return;
 
     tabBooksButton.classList.toggle("active", activeView === "books");
+    tabReadingButton.classList.toggle("active", activeView === "reading");
     tabTbrButton.classList.toggle("active", activeView === "tbr");
     tabSeriesButton.classList.toggle("active", activeView === "series");
+    tabAuthorsButton.classList.toggle("active", activeView === "authors");
     tabStatsButton.classList.toggle("active", activeView === "stats");
 
     booksView.hidden = activeView !== "books";
+    readingView.hidden = activeView !== "reading";
     tbrView.hidden = activeView !== "tbr";
     seriesView.hidden = activeView !== "series";
+    authorsView.hidden = activeView !== "authors";
     statsView.hidden = activeView !== "stats";
 
+    if (activeView === "reading") renderReadingBooks();
     if (activeView === "tbr") renderTbrBooks();
     if (activeView === "series") renderSeriesOverview();
+    if (activeView === "authors") renderAuthorsOverview();
     if (activeView === "stats") renderStatisticsPage();
 }
 
-
-if (tabBooksButton && tabTbrButton && tabSeriesButton && tabStatsButton) {
+if (tabBooksButton && tabReadingButton && tabTbrButton && tabSeriesButton && tabAuthorsButton && tabStatsButton) {
     tabBooksButton.addEventListener("click", () => switchView("books"));
+    tabReadingButton.addEventListener("click", () => switchView("reading"));
     tabTbrButton.addEventListener("click", () => switchView("tbr"));
     tabSeriesButton.addEventListener("click", () => switchView("series"));
+    tabAuthorsButton.addEventListener("click", () => switchView("authors"));
     tabStatsButton.addEventListener("click", () => switchView("stats"));
+}
+
+
+//-------
+//Lese ich
+//______
+
+function renderReadingBooks() {
+    if (!readingList) return;
+
+    const readingBooks = books
+        .filter(book => book.status === "reading")
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    readingList.innerHTML = "";
+
+    if (readingBooks.length === 0) {
+        readingList.innerHTML = `
+            <div class="empty-series-hint" style="grid-column: 1 / -1;">
+                Du liest gerade kein Buch aktiv.<br>
+                Setze ein Buch auf den Status „Lese ich“, damit es hier erscheint.
+            </div>
+        `;
+        return;
+    }
+
+    const langLabels = { de: "Deutsch", en: "Englisch", it: "Italienisch" };
+
+    readingBooks.forEach(book => {
+        const card = document.createElement("article");
+        card.className = "book-card";
+
+        const categoryLabel = book.category === "fiction" ? "Fiction" : book.category === "non-fiction" ? "Non-Fiction" : "";
+        const genreLabel = (book.genre || "").trim();
+        const languageLabel = book.language ? (langLabels[book.language] || book.language) : "";
+        const seriesText = book.series
+            ? (book.volume ? `${book.series} · Band ${book.volume}` : book.series)
+            : "";
+
+        card.innerHTML = `
+            <div class="cover-wrapper">
+                ${
+                    book.cover
+                        ? `<img class="book-cover" src="${escapeHtml(book.cover)}" alt="Cover von ${escapeHtml(book.title)}">`
+                        : `<div class="book-cover-placeholder">Kein Cover</div>`
+                }
+            </div>
+
+            <h3>${escapeHtml(book.title)}</h3>
+            ${book.author ? `<p class="author">${escapeHtml(book.author)}</p>` : ""}
+
+            <div class="card-badges">
+                <span class="status">Lese ich</span>
+                ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
+                ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
+                ${languageLabel ? `<span class="meta-pill">${escapeHtml(languageLabel)}</span>` : ""}
+                ${book.isFanfiction ? `<span class="meta-pill">Fanfiction</span>` : ""}
+            </div>
+
+            ${seriesText ? `<div class="series">${escapeHtml(seriesText)}</div>` : ""}
+            ${book.startDate ? `<div class="finished-date">Begonnen: ${formatGermanDate(book.startDate)}</div>` : ""}
+            ${book.notes ? `<p class="notes">${escapeHtml(book.notes)}</p>` : ""}
+
+            <div class="card-actions">
+                <button class="details-button" data-id="${book.id}">Details</button>
+                <div class="card-icon-group">
+                    <button class="edit-button" data-id="${book.id}" aria-label="Buch bearbeiten" title="Bearbeiten">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                            <path d="m15 5 4 4"/>
+                        </svg>
+                    </button>
+                    <button class="delete-button" data-id="${book.id}" aria-label="Buch löschen" title="Löschen">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            <line x1="10" x2="10" y1="11" y2="17"/>
+                            <line x1="14" x2="14" y1="11" y2="17"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        card.querySelector(".details-button").addEventListener("click", () => showBookDetails(book.id));
+        card.querySelector(".edit-button").addEventListener("click", () => editBook(book.id));
+        card.querySelector(".delete-button").addEventListener("click", () => deleteBook(book.id));
+
+        readingList.appendChild(card);
+    });
 }
 
 
@@ -1484,6 +1625,153 @@ function renderSeriesOverview() {
 }
 
 // -----------------------------
+// Autorinnen-Übersicht rendern
+// -----------------------------
+function openAuthorTbrBooks(authorName, tbrBooks) {
+    if (tbrBooks.length === 0) return;
+
+    // Bei genau 1 Buch: direkt die Buchdetails öffnen
+    if (tbrBooks.length === 1) {
+        showBookDetails(tbrBooks[0].id);
+        return;
+    }
+
+    // Bei mehreren Büchern: Auswahl-Dialog anzeigen
+    if (!authorTbrDialog || !authorTbrBookList) return;
+
+    if (authorTbrDialogTitle) {
+        authorTbrDialogTitle.textContent = `${authorName} · Leseliste (${tbrBooks.length})`;
+    }
+
+    authorTbrBookList.innerHTML = tbrBooks.map(book => {
+        const seriesInfo = book.series
+            ? (book.volume ? `${book.series} · Band ${book.volume}` : book.series)
+            : "";
+        const subParts = [book.genre, seriesInfo, book.releaseDate ? `Erscheint: ${formatGermanDate(book.releaseDate)}` : ""]
+            .filter(Boolean)
+            .join(" · ");
+
+        return `
+            <li class="author-tbr-modal-item" data-id="${book.id}" role="button" tabindex="0">
+                <div>
+                    <div class="author-tbr-modal-title">${escapeHtml(book.title)}</div>
+                    ${subParts ? `<div class="author-tbr-modal-sub">${escapeHtml(subParts)}</div>` : ""}
+                </div>
+                <span style="color: var(--accent); font-weight: 700;">Details →</span>
+            </li>
+        `;
+    }).join("");
+
+    authorTbrBookList.querySelectorAll(".author-tbr-modal-item").forEach(item => {
+        item.addEventListener("click", () => {
+            const bookId = item.dataset.id;
+            authorTbrDialog.close();
+            showBookDetails(bookId);
+        });
+    });
+
+    authorTbrDialog.showModal();
+}
+
+if (closeAuthorTbrDialogButton && authorTbrDialog) {
+    closeAuthorTbrDialogButton.addEventListener("click", () => authorTbrDialog.close());
+}
+
+function renderAuthorsOverview() {
+    if (!authorsOverviewList) return;
+
+    const searchTerm = authorSearchInput ? authorSearchInput.value.trim().toLowerCase() : "";
+    const authorMap = new Map();
+
+    books.forEach(book => {
+        const name = (book.author || "").trim();
+        if (!name) return;
+
+        if (!authorMap.has(name)) {
+            authorMap.set(name, {
+                name,
+                finishedBooks: [],
+                tbrBooks: []
+            });
+        }
+
+        const entry = authorMap.get(name);
+        if (book.status === "finished") {
+            entry.finishedBooks.push(book);
+        } else if (book.status === "wishlist") {
+            entry.tbrBooks.push(book);
+        }
+    });
+
+    let authors = [...authorMap.values()].filter(a =>
+        !searchTerm || a.name.toLowerCase().includes(searchTerm)
+    );
+
+    // Absteigend sortiert nach Anzahl gelesener Bücher (bei Gleichstand alphabetisch)
+    authors.sort((a, b) => {
+        if (b.finishedBooks.length !== a.finishedBooks.length) {
+            return b.finishedBooks.length - a.finishedBooks.length;
+        }
+        return a.name.localeCompare(b.name, "de");
+    });
+
+    if (authors.length === 0) {
+        authorsOverviewList.innerHTML = `
+            <div style="padding: 24px; text-align: center; color: var(--secondary-text);">
+                Keine passenden Autorinnen gefunden.
+            </div>
+        `;
+        return;
+    }
+
+    const headerHtml = `
+        <div class="author-row header">
+            <span>Autorin</span>
+            <span class="author-stat-cell">Gelesen</span>
+            <span class="author-stat-cell">Ø Bewertung</span>
+            <span class="author-stat-cell">Leseliste</span>
+        </div>
+    `;
+
+    const rowsHtml = authors.map(author => {
+        const finishedCount = author.finishedBooks.length;
+        const ratedBooks = author.finishedBooks.filter(b => b.rating !== "dnf" && Number(b.rating) > 0);
+        const avgRatingText = ratedBooks.length > 0
+            ? `${(ratedBooks.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBooks.length).toFixed(2).replace(".", ",")} ★`
+            : "–";
+
+        const tbrCount = author.tbrBooks.length;
+        const tbrCellHtml = tbrCount > 0
+            ? `<button type="button" class="author-tbr-link" data-author="${escapeHtml(author.name)}" title="Leselisten-Bücher ansehen">${tbrCount}</button>`
+            : `<span>0</span>`;
+
+        return `
+            <div class="author-row">
+                <span class="author-name">${escapeHtml(author.name)}</span>
+                <span class="author-stat-cell strong">${finishedCount}</span>
+                <span class="author-stat-cell">${avgRatingText}</span>
+                <span class="author-stat-cell">${tbrCellHtml}</span>
+            </div>
+        `;
+    }).join("");
+
+    authorsOverviewList.innerHTML = headerHtml + rowsHtml;
+
+    authorsOverviewList.querySelectorAll(".author-tbr-link").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const authorData = authorMap.get(btn.dataset.author);
+            if (authorData) {
+                openAuthorTbrBooks(authorData.name, authorData.tbrBooks);
+            }
+        });
+    });
+}
+
+if (authorSearchInput) {
+    authorSearchInput.addEventListener("input", renderAuthorsOverview);
+}
+
+// -----------------------------
 // Statistik-Unterseite berechnen & rendern
 // -----------------------------
 function updateStatsYearOptions() {
@@ -1686,6 +1974,75 @@ function buildRatingColumnChartHtml(finishedBooks) {
     `;
 }
 
+function buildDecadeColumnChartHtml(finishedBooks) {
+    const validYears = finishedBooks
+        .map(b => Number(b.releaseYear))
+        .filter(y => y > 0);
+
+    const noYearCount = finishedBooks.length - validYears.length;
+
+    if (validYears.length === 0) {
+        return `
+            <div class="stats-panel">
+                <h3>Erscheinungsjahrzehnte</h3>
+                <p style="margin: 0; font-size: 13px; color: var(--secondary-text);">Noch keine Erscheinungsjahre hinterlegt.</p>
+            </div>
+        `;
+    }
+
+    const minDecade = Math.floor(Math.min(...validYears) / 10) * 10;
+    const maxDecade = Math.floor(Math.max(...validYears) / 10) * 10;
+
+    const slots = [];
+    for (let d = minDecade; d <= maxDecade; d += 10) {
+        slots.push({
+            decade: d,
+            label: `${String(d).slice(-2)}er`,
+            fullLabel: `${d}er`,
+            count: 0
+        });
+    }
+
+    validYears.forEach(y => {
+        const d = Math.floor(y / 10) * 10;
+        const slot = slots.find(s => s.decade === d);
+        if (slot) slot.count++;
+    });
+
+    if (noYearCount > 0) {
+        slots.push({
+            decade: null,
+            label: "o. A.",
+            fullLabel: "Ohne Angabe",
+            count: noYearCount
+        });
+    }
+
+    const maxCount = Math.max(...slots.map(s => s.count), 1);
+
+    const columnsHtml = slots.map(slot => {
+        const heightPercent = slot.count > 0 ? Math.max(Math.round((slot.count / maxCount) * 100), 8) : 2;
+        const barClasses = ["col-bar", slot.count === 0 ? "empty" : ""].filter(Boolean).join(" ");
+
+        return `
+            <div class="col-item" title="${slot.fullLabel}: ${slot.count} Bücher">
+                <div class="col-bar-area">
+                    <span class="col-count ${slot.count === 0 ? "zero" : ""}">${slot.count}</span>
+                    <div class="${barClasses}" style="height: ${heightPercent}%"></div>
+                </div>
+                <span class="col-label">${escapeHtml(slot.label)}</span>
+            </div>
+        `;
+    }).join("");
+
+    return `
+        <div class="stats-panel">
+            <h3>Erscheinungsjahrzehnte</h3>
+            <div class="decade-column-chart" style="--cols: ${slots.length};">${columnsHtml}</div>
+        </div>
+    `;
+}
+
 
 function renderStatisticsPage() {
     if (!statsDashboard) return;
@@ -1857,7 +2214,7 @@ function renderStatisticsPage() {
             ${buildDonutPanelHtml("Formate", formatEntries, finishedBooks.length)}
             ${buildDonutPanelHtml("Sprachen", langEntries, finishedBooks.length)}
             ${buildRatingColumnChartHtml(finishedBooks)}
-            ${buildDonutPanelHtml("Erscheinungsjahrzehnte", decadeEntries, finishedBooks.length)}
+            ${buildDecadeColumnChartHtml(finishedBooks)}
         </div>
 
     `;
@@ -1868,27 +2225,11 @@ if (statsFanfictionFilter) statsFanfictionFilter.addEventListener("change", rend
 
 
 searchInput.addEventListener("input", renderBooks);
-statusFilter.addEventListener("change", renderBooks);
-if (seriesFilter) {
-    seriesFilter.addEventListener("change", renderBooks);
-}
-if (fanfictionFilter) {
-    fanfictionFilter.addEventListener("change", renderBooks);
-}
-if (sortOrderFilter) {
-    sortOrderFilter.addEventListener("change", renderBooks);
-}
-
-if (tbrFanfictionFilter) {
-    tbrFanfictionFilter.addEventListener("change", () => {
-        if (randomPickContainer) randomPickContainer.hidden = true;
-        renderTbrBooks();
-    });
-}
-if (tbrSortOrderFilter) {
-    tbrSortOrderFilter.addEventListener("change", renderTbrBooks);
-}
-
+if (categoryFilter) categoryFilter.addEventListener("change", renderBooks);
+if (genreFilter) genreFilter.addEventListener("change", renderBooks);
+if (seriesFilter) seriesFilter.addEventListener("change", renderBooks);
+if (fanfictionFilter) fanfictionFilter.addEventListener("change", renderBooks);
+if (sortOrderFilter) sortOrderFilter.addEventListener("change", renderBooks);
 
 
 function escapeHtml(text) {

@@ -63,21 +63,24 @@
         <!-- NEU: Tab-Navigation -->
         <nav class="view-tabs">
             <button type="button" id="tabBooksButton" class="tab-button active">Alle Bücher</button>
+            <button type="button" id="tabReadingButton" class="tab-button">Lese ich</button>
             <button type="button" id="tabTbrButton" class="tab-button">Leseliste</button>
             <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
+            <button type="button" id="tabAuthorsButton" class="tab-button">Autorinnen</button>
             <button type="button" id="tabStatsButton" class="tab-button">Statistiken</button>
         </nav>
-
-
 
         <!-- ANSICHT 1: Deine bisherige Bücher-Ansicht -->
         <section id="booksView">
             <div class="toolbar">
                 <input type="search" id="searchInput" placeholder="Nach Titel, Autor oder Serie suchen …">
-                <select id="statusFilter">
-                    <option value="all">Gelesen & Aktuell</option>
-                    <option value="finished">Gelesen</option>
-                    <option value="reading">Lese ich</option>
+                <select id="categoryFilter">
+                    <option value="all">Alle Kategorien</option>
+                    <option value="fiction">Fiction</option>
+                    <option value="non-fiction">Non-Fiction</option>
+                </select>
+                <select id="genreFilter">
+                    <option value="all">Alle Genres</option>
                 </select>
                 <select id="seriesFilter">
                     <option value="all">Alle Serien</option>
@@ -87,7 +90,6 @@
                     <option value="no">Ohne Fanfiction</option>
                     <option value="only">Nur Fanfiction</option>
                 </select>
-
                 <select id="sortOrderFilter" aria-label="Sortierung">
                     <option value="newest">Sortieren: Zuletzt hinzugefügt</option>
                     <option value="finished-desc">Beendet (Neueste zuerst)</option>
@@ -96,8 +98,6 @@
                     <option value="title-asc">Titel (A–Z)</option>
                     <option value="author-asc">Autor (A–Z)</option>
                 </select>
-
-
             </div>
 
 
@@ -136,6 +136,13 @@
 
 
         </section>
+
+        <!-- ANSICHT: LESE ICH -->
+        <section id="readingView" hidden>
+            <div id="readingList" class="book-grid"></div>
+        </section>
+
+
 
         <!-- NEU: ANSICHT 2: TBR (To Be Read) -->
         <section id="tbrView" hidden>
@@ -176,6 +183,15 @@
         <section id="seriesView" hidden>
             <div id="seriesOverviewList" class="series-grid"></div>
         </section>
+
+        <!-- ANSICHT: AUTORINNEN -->
+        <section id="authorsView" hidden>
+            <div class="authors-toolbar">
+                <input type="search" id="authorSearchInput" placeholder="Nach Autorin suchen …">
+            </div>
+            <div id="authorsOverviewList" class="authors-list-card"></div>
+        </section>
+
 
         <!-- ANSICHT 4: STATISTIKEN -->
         <section id="statsView" hidden>
@@ -451,6 +467,18 @@
         </div>
     </div>
 </dialog>
+
+<!-- Dialog: Leselisten-Bücher einer Autorin -->
+<dialog id="authorTbrDialog">
+    <div class="details-dialog-content">
+        <div class="dialog-header">
+            <h2 id="authorTbrDialogTitle">Leseliste</h2>
+            <button type="button" id="closeAuthorTbrDialogButton" class="icon-button" aria-label="Schließen">×</button>
+        </div>
+        <ul id="authorTbrBookList" class="author-tbr-modal-list"></ul>
+    </div>
+</dialog>
+
 
 
 

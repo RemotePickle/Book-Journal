@@ -1495,3 +1495,170 @@ input[type="date"] {
         grid-template-columns: 1fr;
     }
 }
+
+/* Toolbar in "Alle Bücher" (6 kompakte Spalten nebeneinander am Desktop) */
+.toolbar {
+    display: grid;
+    grid-template-columns: minmax(140px, 1.3fr) 140px 140px 140px 155px 165px;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+/* Dynamisches Säulendiagramm für Erscheinungsjahrzehnte */
+.decade-column-chart {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr));
+    gap: 6px;
+    align-items: end;
+    height: 175px;
+    padding-top: 22px;
+}
+
+.decade-column-chart .col-bar {
+    background: var(--accent);
+}
+
+.decade-column-chart .col-bar.empty {
+    background: var(--border);
+    opacity: 0.5;
+}
+
+@media (max-width: 900px) {
+    .toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .toolbar {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Autorinnen-Übersicht */
+.authors-toolbar {
+    max-width: 360px;
+    margin-bottom: 18px;
+}
+
+.authors-list-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.author-row {
+    display: grid;
+    grid-template-columns: 1fr 110px 120px 120px;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.author-row:last-child {
+    border-bottom: none;
+}
+
+.author-row.header {
+    background: var(--background);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--secondary-text);
+    padding-top: 11px;
+    padding-bottom: 11px;
+}
+
+.author-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.author-stat-cell {
+    text-align: right;
+    color: var(--secondary-text);
+    font-weight: 600;
+}
+
+.author-stat-cell.strong {
+    color: var(--text);
+}
+
+.author-tbr-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.author-tbr-link:hover {
+    border-color: var(--accent);
+    background: #d5e2d9;
+}
+
+/* Auswahl-Liste im Dialog bei mehreren TBR-Büchern einer Autorin */
+.author-tbr-modal-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.author-tbr-modal-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.author-tbr-modal-item:hover {
+    border-color: var(--accent);
+}
+
+.author-tbr-modal-title {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 15px;
+}
+
+.author-tbr-modal-sub {
+    font-size: 12px;
+    color: var(--secondary-text);
+    margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+    .authors-toolbar {
+        max-width: 100%;
+    }
+
+    .author-row {
+        grid-template-columns: 1fr 64px 72px 74px;
+        gap: 6px;
+        padding: 11px 12px;
+        font-size: 13px;
+    }
+
+    .author-row.header {
+        font-size: 10px;
+    }
+}
