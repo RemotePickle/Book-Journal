@@ -1477,3 +1477,20 @@ label.checkbox-field input[type="checkbox"] {
     line-height: 1.1;
 }
 
+/* Fix für iPhone Safari: Datumsfelder im Formular nicht breiter als das Dialogfenster */
+.form-row-two > *,
+.date-inputs-row > * {
+    min-width: 0;
+}
+
+input[type="date"] {
+    min-width: 0;
+    max-width: 100%;
+    -webkit-appearance: none;
+}
+
+@media (max-width: 480px) {
+    .form-row-two {
+        grid-template-columns: 1fr;
+    }
+}
