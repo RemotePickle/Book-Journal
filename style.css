@@ -1132,3 +1132,41 @@ label {
         justify-content: center;
     }
 }
+
+/* Checkbox im Formular */
+.checkbox-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 22px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-field input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Erweiterte Filterleisten (4 Spalten am Desktop) */
+.toolbar {
+    grid-template-columns: 1fr 170px 170px 190px;
+}
+
+.tbr-controls {
+    grid-template-columns: 170px 170px 190px 1fr;
+}
+
+@media (max-width: 768px) {
+    .toolbar,
+    .tbr-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .checkbox-field {
+        padding-top: 4px;
+    }
+}

@@ -83,6 +83,13 @@
                 <select id="seriesFilter">
                     <option value="all">Alle Serien</option>
                 </select>
+
+                <select id="fanfictionFilter">
+                    <option value="all">Alle (inkl. Fanfiction)</option>
+                    <option value="no">Ohne Fanfiction</option>
+                    <option value="only">Nur Fanfiction</option>
+                </select>
+
             </div>
 
             <section class="stats">
@@ -103,13 +110,23 @@
             <section id="bookList" class="book-grid"></section>
 
             <!-- Button für Import und Export-->
+
             <div class="backup-bar">
-                <button type="button" id="exportButton" class="secondary-button">Backup exportieren</button>
+                <button type="button" id="exportButton" class="secondary-button">JSON Backup</button>
                 <label class="secondary-button">
-                    Backup importieren
+                    JSON Import
                     <input type="file" id="importInput" accept=".json" hidden>
                 </label>
+
+                <!-- NEU: Für Google Sheets / Excel -->
+                <button type="button" id="exportCsvButton" class="secondary-button">📊 CSV Export (Sheets)</button>
+                <label class="secondary-button">
+                    📥 CSV Import
+                    <input type="file" id="importCsvInput" accept=".csv" hidden>
+                </label>
             </div>
+
+
         </section>
 
         <!-- NEU: ANSICHT 2: TBR (To Be Read) -->
@@ -124,6 +141,13 @@
                 <select id="tbrGenreFilter">
                     <option value="all">Alle Genres</option>
                 </select>
+
+                <select id="tbrFanfictionFilter">
+                    <option value="all">Alle (inkl. Fanfiction)</option>
+                    <option value="no">Ohne Fanfiction</option>
+                    <option value="only">Nur Fanfiction</option>
+                </select>
+
 
                 <button type="button" id="randomBookButton" class="primary-button">
                     🎲 Zufallsbuch ziehen
@@ -279,6 +303,28 @@
                     <input type="text" id="genreInput" placeholder="z. B. Fantasy, Thriller">
                 </label>
             </div>
+
+                        <div class="form-row-two">
+                <div id="releaseDateWrapper">
+                    <label>
+                        Erscheinungsdatum
+                        <input type="date" id="releaseDateInput">
+                    </label>
+                </div>
+
+                <div id="releaseYearWrapper" hidden>
+                    <label>
+                        Erscheinungsjahr
+                        <input type="number" id="releaseYearInput" min="1000" max="2100" placeholder="z. B. 2024">
+                    </label>
+                </div>
+
+                <label class="checkbox-field">
+                    <input type="checkbox" id="fanfictionInput">
+                    <span>Fanfiction</span>
+                </label>
+            </div>
+
 
             <div class="form-row-two">
                 <label>

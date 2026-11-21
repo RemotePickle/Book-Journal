@@ -92,6 +92,14 @@ const tbrGenreFilter = document.getElementById("tbrGenreFilter");
 const randomBookButton = document.getElementById("randomBookButton");
 const randomPickContainer = document.getElementById("randomPickContainer");
 
+const exportCsvButton = document.getElementById("exportCsvButton");
+const importCsvInput = document.getElementById("importCsvInput");
+
+const bookStatusInput = document.getElementById("bookStatusInput");
+const releaseDateWrapper = document.getElementById("releaseDateWrapper");
+const releaseYearWrapper = document.getElementById("releaseYearWrapper");
+const fanfictionFilter = document.getElementById("fanfictionFilter");
+const tbrFanfictionFilter = document.getElementById("tbrFanfictionFilter");
 
 let currentDetailsBookId = null;
 let bookIdToDelete = null;
@@ -257,6 +265,28 @@ function updateFormatFieldsVisibility() {
     if (audioDurationWrapper) audioDurationWrapper.hidden = !isAudio;
 }
 
+function updateStatusFieldsVisibility() {
+    if (!bookStatusInput) return;
+    const isWishlist = bookStatusInput.value === "wishlist";
+
+    if (releaseDateWrapper) releaseDateWrapper.hidden = !isWishlist;
+    if (releaseYearWrapper) releaseYearWrapper.hidden = isWishlist;
+
+    // Wenn von Leseliste auf Gelesen/Lese ich gewechselt wird: Jahr automatisch aus Erscheinungsdatum übernehmen
+    if (!isWishlist) {
+        const releaseDateVal = document.getElementById("releaseDateInput")?.value;
+        const releaseYearEl = document.getElementById("releaseYearInput");
+        if (releaseDateVal && releaseYearEl && !releaseYearEl.value) {
+            releaseYearEl.value = releaseDateVal.slice(0, 4);
+        }
+    }
+}
+
+if (bookStatusInput) {
+    bookStatusInput.addEventListener("change", updateStatusFieldsVisibility);
+}
+
+
 if (formatInput) {
     formatInput.addEventListener("change", updateFormatFieldsVisibility);
 }
@@ -272,7 +302,7 @@ addBookButton.addEventListener("click", () => {
     selectedCover = "";
     hideCoverPreview();
     updateFormatFieldsVisibility();
-
+    updateStatusFieldsVisibility();
 
     document.querySelector(".dialog-header h2").textContent = "Buch hinzufügen";
     document.querySelector(".save-button").textContent = "Buch speichern";
@@ -313,7 +343,11 @@ bookForm.addEventListener("submit", async (event) => {
         startDate: document.getElementById("startDateInput").value,
         finishedDate: document.getElementById("finishedDateInput").value,
         notes: document.getElementById("notesInput").value.trim(),
-        quotes: document.getElementById("quotesInput").value.trim()
+        quotes: document.getElementById("quotesInput").value.trim(),
+        releaseDate: document.getElementById("releaseDateInput").value,
+        releaseYear: Number(document.getElementById("releaseYearInput").value) || 0,
+        isFanfiction: document.getElementById("fanfictionInput").checked,
+
     };
 
 
@@ -376,6 +410,11 @@ function editBook(id) {
     document.getElementById("startDateInput").value = book.startDate || "";
     document.getElementById("finishedDateInput").value = book.finishedDate || "";
     document.getElementById("quotesInput").value = book.quotes || "";
+    document.getElementById("releaseDateInput").value = book.releaseDate || "";
+    document.getElementById("releaseYearInput").value = book.releaseYear || "";
+    document.getElementById("fanfictionInput").checked = Boolean(book.isFanfiction);
+    updateStatusFieldsVisibility();
+
 
     updateFormatFieldsVisibility();
 
@@ -510,6 +549,15 @@ function showBookDetails(id) {
         metaItems.push({ label: "Beendet am", value: formatGermanDate(book.finishedDate) });
     }
 
+    if (book.isFanfiction) {
+        metaItems.push({ label: "Typ", value: "Fanfiction" });
+    }
+    if (book.status === "wishlist" && book.releaseDate) {
+        metaItems.push({ label: "Erscheinungsdatum", value: formatGermanDate(book.releaseDate) });
+    } else if (book.releaseYear) {
+        metaItems.push({ label: "Erscheinungsjahr", value: String(book.releaseYear) });
+    }
+
     const extraFieldsEl = document.getElementById("detailsExtraFields");
     if (metaItems.length > 0) {
         extraFieldsEl.innerHTML = metaItems.map(item => `
@@ -523,6 +571,8 @@ function showBookDetails(id) {
         extraFieldsEl.innerHTML = "";
         extraFieldsEl.hidden = true;
     }
+
+
 
     // Notizen
     const notesSection = document.getElementById("detailsNotesSection");
@@ -640,6 +690,181 @@ if (importInput) {
     });
 }
 
+// -----------------------------
+// CSV Export & Import für Google Sheets / Excel
+// -----------------------------
+const CSV_COLUMNS = [
+    "id", "title", "author", "status", "rating", "series", "volume",
+    "category", "genre", "format", "pages", "audioHours", "audioMinutes",
+    "language", "startDate", "finishedDate", "releaseDate", "releaseYear",
+    "isFanfiction", "notes", "quotes"
+];
+
+function escapeCsvCell(value) {
+    const str = value === undefined || value === null ? "" : String(value);
+    if (str.includes(";") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+}
+
+function parseCsvText(text) {
+    const rows = [];
+    let currentRow = [];
+    let currentCell = "";
+    let insideQuotes = false;
+
+    // BOM entfernen, falls vorhanden
+    const cleanText = text.replace(/^\uFEFF/, "");
+
+    for (let i = 0; i < cleanText.length; i++) {
+        const char = cleanText[i];
+        const nextChar = cleanText[i + 1];
+
+        if (insideQuotes) {
+            if (char === '"' && nextChar === '"') {
+                currentCell += '"';
+                i++;
+            } else if (char === '"') {
+                insideQuotes = false;
+            } else {
+                currentCell += char;
+            }
+        } else {
+            if (char === '"') {
+                insideQuotes = true;
+            } else if (char === ";") {
+                currentRow.push(currentCell);
+                currentCell = "";
+            } else if (char === "\r" && nextChar === "\n") {
+                currentRow.push(currentCell);
+                rows.push(currentRow);
+                currentRow = [];
+                currentCell = "";
+                i++;
+            } else if (char === "\n") {
+                currentRow.push(currentCell);
+                rows.push(currentRow);
+                currentRow = [];
+                currentCell = "";
+            } else {
+                currentCell += char;
+            }
+        }
+    }
+
+    if (currentCell !== "" || currentRow.length > 0) {
+        currentRow.push(currentCell);
+        rows.push(currentRow);
+    }
+
+    return rows.filter(row => row.some(cell => cell.trim() !== ""));
+}
+
+if (exportCsvButton) {
+    exportCsvButton.addEventListener("click", () => {
+        if (books.length === 0) {
+            alert("Es sind noch keine Bücher zum Exportieren vorhanden.");
+            return;
+        }
+
+        const headerLine = CSV_COLUMNS.join(";");
+        const dataLines = books.map(book =>
+            CSV_COLUMNS.map(col => escapeCsvCell(book[col])).join(";")
+        );
+
+        const csvContent = "\uFEFF" + [headerLine, ...dataLines].join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+
+        const date = new Date().toISOString().slice(0, 10);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `meine-bibliothek-${date}.csv`;
+        link.click();
+
+        URL.revokeObjectURL(url);
+    });
+}
+
+if (importCsvInput) {
+    importCsvInput.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            const text = await file.text();
+            const rows = parseCsvText(text);
+
+            if (rows.length < 2) {
+                throw new Error("Die CSV-Datei enthält keine Datenzeilen.");
+            }
+
+            const headers = rows[0].map(h => h.trim());
+            const existingBooksMap = new Map(books.map(b => [b.id, b]));
+            const importedBooks = [];
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const rawObj = {};
+                headers.forEach((header, idx) => {
+                    rawObj[header] = (row[idx] || "").trim();
+                });
+
+                if (!rawObj.title) continue; // Leere Zeilen ohne Titel überspringen
+
+                const bookId = rawObj.id || crypto.randomUUID();
+                const oldBook = existingBooksMap.get(bookId);
+
+                importedBooks.push({
+                    id: bookId,
+                    createdAt: oldBook?.createdAt || Date.now(),
+                    cover: oldBook?.cover || "", // Bestehendes Cover bleibt erhalten!
+                    title: rawObj.title,
+                    author: rawObj.author || "",
+                    status: ["wishlist", "reading", "finished"].includes(rawObj.status) ? rawObj.status : "wishlist",
+                    rating: rawObj.rating === "dnf" ? "dnf" : (Number(rawObj.rating) || 0),
+                    series: rawObj.series || "",
+                    volume: rawObj.volume || "",
+                    category: ["fiction", "non-fiction"].includes(rawObj.category) ? rawObj.category : "",
+                    genre: rawObj.genre || "",
+                    format: ["book", "ebook", "audiobook"].includes(rawObj.format) ? rawObj.format : "book",
+                    pages: Number(rawObj.pages) || 0,
+                    audioHours: Number(rawObj.audioHours) || 0,
+                    audioMinutes: Number(rawObj.audioMinutes) || 0,
+                    language: ["de", "en", "it"].includes(rawObj.language) ? rawObj.language : "",
+                    startDate: rawObj.startDate || "",
+                    finishedDate: rawObj.finishedDate || "",
+                    notes: rawObj.notes || "",
+                    quotes: rawObj.quotes || "",
+                    releaseDate: rawObj.releaseDate || "",
+                    releaseYear: Number(rawObj.releaseYear) || 0,
+                    isFanfiction: rawObj.isFanfiction.toLowerCase() === "true",
+
+                });
+            }
+
+            const replace = confirm(
+                `${importedBooks.length} Bücher aus der CSV-Datei gelesen.\n\n` +
+                `Klicke auf "OK", um deine Bibliothek damit zu aktualisieren/ersetzen, oder auf "Abbrechen", um abzubrechen.`
+            );
+
+            if (replace) {
+                books = importedBooks;
+                await replaceAllBooksInDB(books);
+                renderBooks();
+                alert("CSV-Daten erfolgreich in die Cloud übernommen!");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Die CSV-Datei konnte nicht verarbeitet werden: " + error.message);
+        } finally {
+            importCsvInput.value = "";
+        }
+    });
+}
+
+
 function getStatusText(status) {
     if (status === "wishlist") return "Möchte ich lesen";
     if (status === "reading") return "Lese ich";
@@ -710,6 +935,8 @@ function renderBooks() {
     const searchTerm = searchInput.value.toLowerCase();
     const selectedStatus = statusFilter.value;
     const selectedSeries = seriesFilter ? seriesFilter.value : "all";
+    const selectedFanfiction = fanfictionFilter ? fanfictionFilter.value : "all";
+
 
     let filteredBooks = books.filter(book => {
         // TBR-Bücher ("wishlist") gehören ausschließlich in den TBR-Tab
@@ -728,7 +955,13 @@ function renderBooks() {
             selectedSeries === "all" ||
             (book.series && book.series.trim() === selectedSeries);
 
-        return matchesSearch && matchesStatus && matchesSeries;
+        const matchesFanfiction =
+            selectedFanfiction === "all" ||
+            (selectedFanfiction === "only" && Boolean(book.isFanfiction)) ||
+            (selectedFanfiction === "no" && !book.isFanfiction);
+
+        return matchesSearch && matchesStatus && matchesSeries && matchesFanfiction;
+
     });
 
 
@@ -825,6 +1058,9 @@ function renderBooks() {
                 ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
                 ${languageLabel ? `<span class="meta-pill">${escapeHtml(languageLabel)}</span>` : ""}
                 ${lengthLabel ? `<span class="meta-pill">${escapeHtml(lengthLabel)}</span>` : ""}
+                ${book.isFanfiction ? `<span class="meta-pill">Fanfiction</span>` : ""}
+                ${book.releaseYear ? `<span class="meta-pill">${escapeHtml(String(book.releaseYear))}</span>` : ""}
+
             </div>
 
             ${(ratingNum > 0 || isDnf) ? `<div class="rating">${getStars(book.rating)}</div>` : ""}
@@ -937,6 +1173,8 @@ function getFilteredTbrBooks() {
 
     const selectedCategory = tbrCategoryFilter ? tbrCategoryFilter.value : "all";
     const selectedGenre = tbrGenreFilter ? tbrGenreFilter.value : "all";
+    const selectedFanfiction = tbrFanfictionFilter ? tbrFanfictionFilter.value : "all";
+
 
     return allTbrBooks.filter(book => {
         const matchesCategory =
@@ -947,7 +1185,13 @@ function getFilteredTbrBooks() {
             selectedGenre === "all" ||
             (book.genre && book.genre.trim() === selectedGenre);
 
-        return matchesCategory && matchesGenre;
+        const matchesFanfiction =
+            selectedFanfiction === "all" ||
+            (selectedFanfiction === "only" && Boolean(book.isFanfiction)) ||
+            (selectedFanfiction === "no" && !book.isFanfiction);
+
+        return matchesCategory && matchesGenre && matchesFanfiction;
+
     });
 }
 
@@ -1094,13 +1338,16 @@ function renderTbrBooks() {
             ${book.author ? `<p class="author">${escapeHtml(book.author)}</p>` : ""}
 
             ${
-                (categoryLabel || genreLabel)
-                    ? `<div class="card-badges">
-                        ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
-                        ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
-                       </div>`
-                    : ""
+              (categoryLabel || genreLabel || book.isFanfiction || book.releaseDate)
+                  ? `<div class="card-badges">
+                      ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
+                      ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
+                      ${book.isFanfiction ? `<span class="meta-pill">Fanfiction</span>` : ""}
+                      ${book.releaseDate ? `<span class="meta-pill">Erscheint: ${formatGermanDate(book.releaseDate)}</span>` : ""}
+                     </div>`
+                  : ""
             }
+
 
             ${book.notes ? `<p class="notes">${escapeHtml(book.notes)}</p>` : ""}
 
@@ -1218,6 +1465,17 @@ statusFilter.addEventListener("change", renderBooks);
 if (seriesFilter) {
     seriesFilter.addEventListener("change", renderBooks);
 }
+if (fanfictionFilter) {
+    fanfictionFilter.addEventListener("change", renderBooks);
+}
+
+if (tbrFanfictionFilter) {
+    tbrFanfictionFilter.addEventListener("change", () => {
+        if (randomPickContainer) randomPickContainer.hidden = true;
+        renderTbrBooks();
+    });
+}
+
 
 function escapeHtml(text) {
     const element = document.createElement("div");
