@@ -667,8 +667,10 @@ function parseCsvText(text) {
     let currentCell = "";
     let insideQuotes = false;
 
-    // BOM entfernen, falls vorhanden
+    // BOM entfernen & Trennzeichen (Semikolon oder Komma) automatisch aus der Kopfzeile erkennen
     const cleanText = text.replace(/^\uFEFF/, "");
+    const firstLine = cleanText.split(/\r?\n/)[0] || "";
+    const delimiter = (firstLine.match(/;/g) || []).length >= (firstLine.match(/,/g) || []).length ? ";" : ",";
 
     for (let i = 0; i < cleanText.length; i++) {
         const char = cleanText[i];
@@ -686,7 +688,7 @@ function parseCsvText(text) {
         } else {
             if (char === '"') {
                 insideQuotes = true;
-            } else if (char === ";") {
+            } else if (char === delimiter) {
                 currentRow.push(currentCell);
                 currentCell = "";
             } else if (char === "\r" && nextChar === "\n") {
@@ -713,6 +715,7 @@ function parseCsvText(text) {
 
     return rows.filter(row => row.some(cell => cell.trim() !== ""));
 }
+
 
 if (exportCsvButton) {
     exportCsvButton.addEventListener("click", () => {
@@ -796,6 +799,12 @@ if (importCsvInput) {
 
                 });
             }
+
+            if (importedBooks.length === 0) {
+                alert("Es wurden keine gültigen Bücher in der CSV-Datei gefunden. Deine bestehenden Daten wurden nicht verändert.");
+                return;
+            }
+
 
             const replace = confirm(
                 `${importedBooks.length} Bücher aus der CSV-Datei gelesen.\n\n` +
