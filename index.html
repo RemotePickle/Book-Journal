@@ -65,7 +65,9 @@
             <button type="button" id="tabBooksButton" class="tab-button active">Alle Bücher</button>
             <button type="button" id="tabTbrButton" class="tab-button">Leseliste</button>
             <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
+            <button type="button" id="tabStatsButton" class="tab-button">Statistiken</button>
         </nav>
+
 
 
         <!-- ANSICHT 1: Deine bisherige Bücher-Ansicht -->
@@ -174,6 +176,24 @@
         <section id="seriesView" hidden>
             <div id="seriesOverviewList" class="series-grid"></div>
         </section>
+
+        <!-- ANSICHT 4: STATISTIKEN -->
+        <section id="statsView" hidden>
+            <div class="stats-toolbar">
+                <select id="statsYearFilter" aria-label="Jahr auswählen">
+                    <option value="all">Zeitraum: Gesamt</option>
+                </select>
+
+                <select id="statsFanfictionFilter" aria-label="Fanfiction-Filter">
+                    <option value="all">Alle (inkl. Fanfiction)</option>
+                    <option value="no">Ohne Fanfiction</option>
+                    <option value="only">Nur Fanfiction</option>
+                </select>
+            </div>
+
+            <div id="statsDashboard" class="stats-dashboard"></div>
+        </section>
+
     </main>
 
 

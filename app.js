@@ -103,6 +103,12 @@ const tbrFanfictionFilter = document.getElementById("tbrFanfictionFilter");
 const sortOrderFilter = document.getElementById("sortOrderFilter");
 const tbrSortOrderFilter = document.getElementById("tbrSortOrderFilter");
 
+const tabStatsButton = document.getElementById("tabStatsButton");
+const statsView = document.getElementById("statsView");
+const statsYearFilter = document.getElementById("statsYearFilter");
+const statsFanfictionFilter = document.getElementById("statsFanfictionFilter");
+const statsDashboard = document.getElementById("statsDashboard");
+
 let currentDetailsBookId = null;
 let bookIdToDelete = null;
 let selectedCover = "";
@@ -1080,7 +1086,7 @@ function renderBooks() {
     updateStats();
     renderTbrBooks();
     renderSeriesOverview();
-
+    renderStatisticsPage();
 }
 
 
@@ -1094,25 +1100,31 @@ function updateStats() {
 // Tab-Umschaltung (Alle Bücher / TBR / Serien)
 // -----------------------------
 function switchView(activeView) {
-    if (!booksView || !tbrView || !seriesView) return;
+    if (!booksView || !tbrView || !seriesView || !statsView) return;
 
     tabBooksButton.classList.toggle("active", activeView === "books");
     tabTbrButton.classList.toggle("active", activeView === "tbr");
     tabSeriesButton.classList.toggle("active", activeView === "series");
+    tabStatsButton.classList.toggle("active", activeView === "stats");
 
     booksView.hidden = activeView !== "books";
     tbrView.hidden = activeView !== "tbr";
     seriesView.hidden = activeView !== "series";
+    statsView.hidden = activeView !== "stats";
 
     if (activeView === "tbr") renderTbrBooks();
     if (activeView === "series") renderSeriesOverview();
+    if (activeView === "stats") renderStatisticsPage();
 }
 
-if (tabBooksButton && tabTbrButton && tabSeriesButton) {
+
+if (tabBooksButton && tabTbrButton && tabSeriesButton && tabStatsButton) {
     tabBooksButton.addEventListener("click", () => switchView("books"));
     tabTbrButton.addEventListener("click", () => switchView("tbr"));
     tabSeriesButton.addEventListener("click", () => switchView("series"));
+    tabStatsButton.addEventListener("click", () => switchView("stats"));
 }
+
 
 // -----------------------------
 // TBR-Ansicht (Nur "Möchte ich lesen" mit Fokus auf Notiz, Kategorie & Genre)
@@ -1461,6 +1473,249 @@ function renderSeriesOverview() {
 
     });
 }
+
+// -----------------------------
+// Statistik-Unterseite berechnen & rendern
+// -----------------------------
+function updateStatsYearOptions() {
+    if (!statsYearFilter) return;
+
+    const currentSelection = statsYearFilter.value;
+    const years = [...new Set(
+        books
+            .filter(b => b.status === "finished" && b.finishedDate)
+            .map(b => b.finishedDate.slice(0, 4))
+    )].sort((a, b) => b.localeCompare(a));
+
+    statsYearFilter.innerHTML = `<option value="all">Zeitraum: Gesamt</option>`;
+    years.forEach(year => {
+        const option = document.createElement("option");
+        option.value = year;
+        option.textContent = `Jahr ${year}`;
+        statsYearFilter.appendChild(option);
+    });
+
+    if (years.includes(currentSelection)) {
+        statsYearFilter.value = currentSelection;
+    } else {
+        statsYearFilter.value = "all";
+    }
+}
+
+function buildBarPanelHtml(title, entries, totalCount, isGold = false) {
+    if (entries.length === 0) {
+        return `
+            <div class="stats-panel">
+                <h3>${escapeHtml(title)}</h3>
+                <p style="margin: 0; font-size: 13px; color: var(--secondary-text);">Noch keine Daten vorhanden.</p>
+            </div>
+        `;
+    }
+
+    const maxVal = Math.max(...entries.map(e => e.count), 1);
+
+    const rowsHtml = entries.map(item => {
+        const widthPercent = Math.round((item.count / maxVal) * 100);
+        const sharePercent = totalCount > 0 ? Math.round((item.count / totalCount) * 100) : 0;
+        const valueLabel = item.customLabel || `${item.count} (${sharePercent} %)`;
+
+        return `
+            <div class="bar-row">
+                <div class="bar-label-row">
+                    <span class="bar-label-name">${escapeHtml(item.label)}</span>
+                    <span class="bar-label-value">${escapeHtml(valueLabel)}</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill ${isGold ? "gold" : ""}" style="width: ${widthPercent}%"></div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    return `
+        <div class="stats-panel">
+            <h3>${escapeHtml(title)}</h3>
+            <div class="bar-list">${rowsHtml}</div>
+        </div>
+    `;
+}
+
+function renderStatisticsPage() {
+    if (!statsDashboard) return;
+
+    updateStatsYearOptions();
+
+    const selectedYear = statsYearFilter ? statsYearFilter.value : "all";
+    const selectedFf = statsFanfictionFilter ? statsFanfictionFilter.value : "all";
+
+    // Basis: Alle gelesenen Bücher (inkl. DNF, falls als gelesen/abgebrochen erfasst)
+    const finishedBooks = books.filter(book => {
+        if (book.status !== "finished") return false;
+
+        if (selectedYear !== "all") {
+            if (!book.finishedDate || !book.finishedDate.startsWith(selectedYear)) return false;
+        }
+
+        if (selectedFf === "only" && !book.isFanfiction) return false;
+        if (selectedFf === "no" && book.isFanfiction) return false;
+
+        return true;
+    });
+
+    if (finishedBooks.length === 0) {
+        statsDashboard.innerHTML = `
+            <div class="empty-series-hint">
+                Für diese Auswahl sind noch keine gelesenen Bücher vorhanden.
+            </div>
+        `;
+        return;
+    }
+
+    // 1. KPI-Berechnungen
+    const dnfCount = finishedBooks.filter(b => b.rating === "dnf").length;
+    const completedCount = finishedBooks.length - dnfCount;
+
+    const ratedBooks = finishedBooks.filter(b => b.rating !== "dnf" && Number(b.rating) > 0);
+    const avgRating = ratedBooks.length > 0
+        ? (ratedBooks.reduce((sum, b) => sum + Number(b.rating), 0) / ratedBooks.length).toFixed(2).replace(".", ",")
+        : "–";
+
+    const pageBooks = finishedBooks.filter(b => b.format !== "audiobook" && Number(b.pages) > 0);
+    const totalPages = pageBooks.reduce((sum, b) => sum + Number(b.pages), 0);
+    const avgPages = pageBooks.length > 0 ? Math.round(totalPages / pageBooks.length) : 0;
+
+    const audioBooks = finishedBooks.filter(b => b.format === "audiobook");
+    const totalAudioMinutes = audioBooks.reduce(
+        (sum, b) => sum + (Number(b.audioHours) || 0) * 60 + (Number(b.audioMinutes) || 0),
+        0
+    );
+    const audioHoursTotal = Math.floor(totalAudioMinutes / 60);
+    const audioMinutesRest = String(totalAudioMinutes % 60).padStart(2, "0");
+
+    // Durchschnittliche Lesedauer in Tagen
+    const durationsInDays = finishedBooks
+        .filter(b => b.startDate && b.finishedDate)
+        .map(b => {
+            const start = new Date(b.startDate);
+            const end = new Date(b.finishedDate);
+            const diff = Math.round((end - start) / (1000 * 60 * 60 * 24));
+            return diff >= 0 ? diff + 1 : null;
+        })
+        .filter(d => d !== null);
+
+    const avgDays = durationsInDays.length > 0
+        ? (durationsInDays.reduce((a, b) => a + b, 0) / durationsInDays.length).toFixed(1).replace(".", ",")
+        : "–";
+
+    // 2. Verteilungen sammeln
+    const countBy = (items, keyFn) => {
+        const map = new Map();
+        items.forEach(item => {
+            const key = keyFn(item);
+            if (!key) return;
+            map.set(key, (map.get(key) || 0) + 1);
+        });
+        return [...map.entries()]
+            .map(([label, count]) => ({ label, count }))
+            .sort((a, b) => b.count - a.count);
+    };
+
+    // Monate (1–12)
+    const monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+    const monthCounts = new Array(12).fill(0);
+    finishedBooks.forEach(b => {
+        if (b.finishedDate && b.finishedDate.length >= 7) {
+            const mIdx = parseInt(b.finishedDate.slice(5, 7), 10) - 1;
+            if (mIdx >= 0 && mIdx < 12) monthCounts[mIdx]++;
+        }
+    });
+    const monthEntries = monthNames
+        .map((label, idx) => ({ label, count: monthCounts[idx], customLabel: `${monthCounts[idx]}` }))
+        .filter(m => selectedYear !== "all" || m.count > 0);
+
+    // Genres (Top 8)
+    const genreEntries = countBy(finishedBooks, b => (b.genre || "").trim()).slice(0, 8);
+
+    // Fiction vs. Non-Fiction
+    const categoryEntries = countBy(finishedBooks, b =>
+        b.category === "fiction" ? "Fiction" : b.category === "non-fiction" ? "Non-Fiction" : "Keine Angabe"
+    );
+
+    // Formate
+    const formatNames = { book: "Buch", ebook: "eBook", audiobook: "Hörbuch" };
+    const formatEntries = countBy(finishedBooks, b => formatNames[b.format] || "Keine Angabe");
+
+    // Sprachen
+    const langNames = { de: "Deutsch", en: "Englisch", it: "Italienisch" };
+    const langEntries = countBy(finishedBooks, b => langNames[b.language] || "Keine Angabe");
+
+    // Bewertungen
+    const ratingMap = new Map();
+    finishedBooks.forEach(b => {
+        const label = b.rating === "dnf" ? "DNF" : Number(b.rating) > 0 ? `${String(b.rating).replace(".", ",")} ★` : "Unbewertet";
+        ratingMap.set(label, (ratingMap.get(label) || 0) + 1);
+    });
+    const ratingEntries = [...ratingMap.entries()]
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => {
+            if (a.label === "Unbewertet") return 1;
+            if (b.label === "Unbewertet") return -1;
+            if (a.label === "DNF") return 1;
+            if (b.label === "DNF") return -1;
+            return parseFloat(b.label.replace(",", ".")) - parseFloat(a.label.replace(",", "."));
+        });
+
+    // Erscheinungs-Jahrzehnte
+    const decadeEntries = countBy(finishedBooks, b => {
+        const y = Number(b.releaseYear);
+        if (!y) return null;
+        if (y < 1980) return "Vor 1980";
+        const decade = Math.floor(y / 10) * 10;
+        return `${decade}er`;
+    });
+
+    // 3. HTML zusammensetzen
+    statsDashboard.innerHTML = `
+        <div class="stats-kpi-grid">
+            <div class="stats-kpi-card">
+                <span class="stats-kpi-value">${completedCount}</span>
+                <span class="stats-kpi-label">Gelesene Bücher</span>
+                <span class="stats-kpi-sub">Ø ${avgRating} ★${dnfCount > 0 ? ` · ${dnfCount} DNF` : ""}</span>
+            </div>
+
+            <div class="stats-kpi-card">
+                <span class="stats-kpi-value">${totalPages.toLocaleString("de-DE")}</span>
+                <span class="stats-kpi-label">Gelesene Seiten</span>
+                <span class="stats-kpi-sub">Ø ${avgPages} Seiten / Buch</span>
+            </div>
+
+            <div class="stats-kpi-card">
+                <span class="stats-kpi-value">${audioHoursTotal}:${audioMinutesRest}</span>
+                <span class="stats-kpi-label">Hörbuch-Stunden</span>
+                <span class="stats-kpi-sub">${audioBooks.length} Hörbücher</span>
+            </div>
+
+            <div class="stats-kpi-card">
+                <span class="stats-kpi-value">${avgDays}</span>
+                <span class="stats-kpi-label">Ø Tage pro Buch</span>
+                <span class="stats-kpi-sub">Basierend auf ${durationsInDays.length} Büchern</span>
+            </div>
+        </div>
+
+        <div class="stats-charts-grid">
+            ${buildBarPanelHtml(selectedYear === "all" ? "Bücher nach Monat (Gesamt)" : `Lesemonate ${selectedYear}`, monthEntries, finishedBooks.length)}
+            ${buildBarPanelHtml("Top Genres", genreEntries, finishedBooks.length)}
+            ${buildBarPanelHtml("Fiction vs. Non-Fiction", categoryEntries, finishedBooks.length)}
+            ${buildBarPanelHtml("Formate", formatEntries, finishedBooks.length)}
+            ${buildBarPanelHtml("Sprachen", langEntries, finishedBooks.length)}
+            ${buildBarPanelHtml("Bewertungen", ratingEntries, finishedBooks.length, true)}
+            ${buildBarPanelHtml("Erscheinungsjahrzehnte", decadeEntries, finishedBooks.length)}
+        </div>
+    `;
+}
+
+if (statsYearFilter) statsYearFilter.addEventListener("change", renderStatisticsPage);
+if (statsFanfictionFilter) statsFanfictionFilter.addEventListener("change", renderStatisticsPage);
 
 
 searchInput.addEventListener("input", renderBooks);
