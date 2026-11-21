@@ -1133,31 +1133,40 @@ label {
     }
 }
 
-/* Checkbox im Formular */
-.checkbox-field {
+/* Checkbox im Formular (überschreibt label { display: grid; }) */
+label.checkbox-field {
     display: flex;
+    flex-direction: row;
     align-items: center;
     gap: 10px;
-    padding-top: 22px;
+    padding-top: 24px;
     cursor: pointer;
     user-select: none;
 }
 
-.checkbox-field input[type="checkbox"] {
+label.checkbox-field input[type="checkbox"] {
     width: 18px;
     height: 18px;
     accent-color: var(--accent);
     margin: 0;
+    flex-shrink: 0;
     cursor: pointer;
 }
 
-/* Erweiterte Filterleisten (4 Spalten am Desktop) */
+/* Erweiterte Filterleisten (4 kompakte Spalten nebeneinander) */
 .toolbar {
-    grid-template-columns: 1fr 170px 170px 190px;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) 160px 150px 175px;
+    gap: 10px;
+    margin-bottom: 18px;
 }
 
 .tbr-controls {
-    grid-template-columns: 170px 170px 190px 1fr;
+    display: grid;
+    grid-template-columns: 155px 155px 175px auto;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
 }
 
 @media (max-width: 768px) {
@@ -1166,7 +1175,8 @@ label {
         grid-template-columns: 1fr;
     }
 
-    .checkbox-field {
+    label.checkbox-field {
         padding-top: 4px;
     }
 }
+
