@@ -1180,3 +1180,21 @@ label.checkbox-field input[type="checkbox"] {
     }
 }
 
+/* Anklickbare Bücher in der Serien-Übersicht */
+.clickable-series-book {
+    cursor: pointer;
+    padding: 6px 8px;
+    margin: 0 -8px;
+    border-radius: 8px;
+    transition: background-color 0.15s ease;
+}
+
+.clickable-series-book:hover {
+    background: var(--background);
+}
+
+.clickable-series-book:hover .series-book-title {
+    color: var(--accent);
+    text-decoration: underline;
+}
+

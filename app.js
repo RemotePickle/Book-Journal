@@ -59,7 +59,6 @@ const exportButton = document.getElementById("exportButton");
 const importInput = document.getElementById("importInput");
 
 const coverUrlInput = document.getElementById("coverUrlInput");
-const coverFileInput = document.getElementById("coverFileInput");
 const coverPreview = document.getElementById("coverPreview");
 const coverPlaceholder = document.getElementById("coverPlaceholder");
 
@@ -169,44 +168,6 @@ async function replaceAllBooksInDB(newBooks) {
     await batch.commit();
 }
 
-// -----------------------------
-// Bildkomprimierung auf max. 400x600px
-// -----------------------------
-function compressImage(file, maxWidth = 400, maxHeight = 600, quality = 0.82) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-            const img = new Image();
-
-            img.onload = () => {
-                let width = img.width;
-                let height = img.height;
-
-                const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
-
-                const canvas = document.createElement("canvas");
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
-                resolve(compressedDataUrl);
-            };
-
-            img.onerror = () => reject(new Error("Bild konnte nicht geladen werden."));
-            img.src = event.target.result;
-        };
-
-        reader.onerror = () => reject(new Error("Datei konnte nicht gelesen werden."));
-        reader.readAsDataURL(file);
-    });
-}
-
 // ==========================================
 // TEIL 2: Cover-Upload, Dialog & CRUD-Logik
 // ==========================================
@@ -220,25 +181,6 @@ coverUrlInput.addEventListener("input", () => {
     } else {
         selectedCover = "";
         hideCoverPreview();
-    }
-});
-
-coverFileInput.addEventListener("change", async () => {
-    const file = coverFileInput.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-        alert("Bitte wähle eine Bilddatei aus.");
-        return;
-    }
-
-    try {
-        selectedCover = await compressImage(file, 400, 600, 0.82);
-        showCoverPreview(selectedCover);
-        coverUrlInput.value = "";
-    } catch (error) {
-        console.error(error);
-        alert("Das Bild konnte leider nicht verarbeitet werden.");
     }
 });
 
@@ -402,7 +344,7 @@ function editBook(id) {
     document.getElementById("notesInput").value = book.notes || "";
     document.getElementById("categoryInput").value = book.category || "";
     document.getElementById("genreInput").value = book.genre || "";
-    document.getElementById("formatInput").value = book.format || "book";
+    document.getElementById("formatInput").value = book.format || "";
     document.getElementById("pagesInput").value = book.pages || "";
     document.getElementById("audioHoursInput").value = book.audioHours || "";
     document.getElementById("audioMinutesInput").value = book.audioMinutes || "";
@@ -498,14 +440,7 @@ function showBookDetails(id) {
 
     document.getElementById("detailsRating").innerHTML = getStars(book.rating);
 
-    const seriesEl = document.getElementById("detailsSeries");
-    if (book.series) {
-        seriesEl.textContent = book.volume ? `${book.series} · Band ${book.volume}` : book.series;
-        seriesEl.hidden = false;
-    } else {
-        seriesEl.textContent = "";
-        seriesEl.hidden = true;
-    }
+
 
     // Zusatzfelder sammeln
     const metaItems = [];
@@ -556,6 +491,15 @@ function showBookDetails(id) {
         metaItems.push({ label: "Erscheinungsdatum", value: formatGermanDate(book.releaseDate) });
     } else if (book.releaseYear) {
         metaItems.push({ label: "Erscheinungsjahr", value: String(book.releaseYear) });
+    }
+
+    const seriesEl = document.getElementById("detailsSeries");
+    if (book.series) {
+        seriesEl.textContent = book.volume ? `${book.series} · Band ${book.volume}` : book.series;
+        seriesEl.hidden = false;
+    } else {
+        seriesEl.textContent = "";
+        seriesEl.hidden = true;
     }
 
     const extraFieldsEl = document.getElementById("detailsExtraFields");
@@ -694,7 +638,7 @@ if (importInput) {
 // CSV Export & Import für Google Sheets / Excel
 // -----------------------------
 const CSV_COLUMNS = [
-    "id", "title", "author", "status", "rating", "series", "volume",
+    "id", "cover", "title", "author", "status", "rating", "series", "volume",
     "category", "genre", "format", "pages", "audioHours", "audioMinutes",
     "language", "startDate", "finishedDate", "releaseDate", "releaseYear",
     "isFanfiction", "notes", "quotes"
@@ -819,7 +763,7 @@ if (importCsvInput) {
                 importedBooks.push({
                     id: bookId,
                     createdAt: oldBook?.createdAt || Date.now(),
-                    cover: oldBook?.cover || "", // Bestehendes Cover bleibt erhalten!
+                    cover: rawObj.cover || oldBook?.cover || "", // Bestehendes Cover bleibt erhalten!
                     title: rawObj.title,
                     author: rawObj.author || "",
                     status: ["wishlist", "reading", "finished"].includes(rawObj.status) ? rawObj.status : "wishlist",
@@ -828,7 +772,7 @@ if (importCsvInput) {
                     volume: rawObj.volume || "",
                     category: ["fiction", "non-fiction"].includes(rawObj.category) ? rawObj.category : "",
                     genre: rawObj.genre || "",
-                    format: ["book", "ebook", "audiobook"].includes(rawObj.format) ? rawObj.format : "book",
+                    format: ["book", "ebook", "audiobook"].includes(rawObj.format) ? rawObj.format : "",
                     pages: Number(rawObj.pages) || 0,
                     audioHours: Number(rawObj.audioHours) || 0,
                     audioMinutes: Number(rawObj.audioMinutes) || 0,
@@ -1434,7 +1378,7 @@ function renderSeriesOverview() {
             const volumeLabel = book.volume ? `<span class="series-volume-tag">Band ${escapeHtml(book.volume)}:</span>` : "";
 
             return `
-                <li class="series-book-item">
+                <li class="series-book-item clickable-series-book" data-id="${book.id}" role="button" tabindex="0">
                     <span class="check-icon ${isFinished ? "done" : "open"}">
                         ${isFinished ? "✓" : ""}
                     </span>
@@ -1455,7 +1399,12 @@ function renderSeriesOverview() {
             </ul>
         `;
 
+        card.querySelectorAll(".clickable-series-book").forEach(item => {
+            item.addEventListener("click", () => showBookDetails(item.dataset.id));
+        });
+
         seriesOverviewList.appendChild(card);
+
     });
 }
 

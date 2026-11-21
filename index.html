@@ -174,47 +174,18 @@
 
 
 <!-- Cover Section -->
-        <div class="cover-section">
+    <div class="cover-section">
+        <label>
+            Cover-Link (URL)
+            <input type="url" id="coverUrlInput" placeholder="https://...">
+        </label>
 
-    <p class="field-label">Cover</p>
-
-    <label>
-        Link zum Cover
-        <input
-            id="coverUrlInput"
-            type="url"
-            placeholder="https://..."
-        >
-    </label>
-
-    <div class="cover-divider">
-        <span>oder</span>
-    </div>
-
-    <label class="file-button">
-        Bild vom Gerät auswählen
-        <input
-            id="coverFileInput"
-            type="file"
-            accept="image/*"
-        >
-    </label>
-
-    <div
-        id="coverPreviewContainer"
-        class="cover-preview-container"
-    >
-        <div id="coverPlaceholder" class="cover-placeholder">
-            Kein Cover
+        <div class="cover-preview-container">
+            <img id="coverPreview" class="cover-preview" alt="Cover Vorschau" hidden>
+            <div id="coverPlaceholder" class="cover-placeholder">Kein Cover</div>
         </div>
-
-        <img
-            id="coverPreview"
-            class="cover-preview"
-            alt="Cover Vorschau"
-            hidden
-        >
     </div>
+
 <!-- Cover Section beendet-->
 
 
@@ -259,24 +230,7 @@
         </label>
 
 
-        <label>
-            Serie
-            <input
-                id="seriesInput"
-                type="text"
-                placeholder="Optional"
-            >
-        </label>
 
-        <label>
-            Band
-            <input
-                id="volumeInput"
-                type="number"
-                min="1"
-                placeholder="Optional"
-            >
-        </label>
 
             <div class="form-row-two">
                 <label>
@@ -321,11 +275,13 @@
                 <label>
                     Format
                     <select id="formatInput">
+                        <option value="">Keine Angabe</option>
                         <option value="book">Buch</option>
                         <option value="ebook">eBook</option>
                         <option value="audiobook">Hörbuch</option>
                     </select>
                 </label>
+
 
                 <div id="pagesFieldWrapper">
                     <label>
@@ -365,6 +321,25 @@
                 </label>
             </div>
 
+
+            <label>
+                Serie
+                <input
+                    id="seriesInput"
+                    type="text"
+                    placeholder="Optional"
+                >
+            </label>
+
+            <label>
+                Band
+                <input
+                    id="volumeInput"
+                    type="number"
+                    min="1"
+                    placeholder="Optional"
+                >
+            </label>
 
             <label>
                 Notizen
