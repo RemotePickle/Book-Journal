@@ -1540,6 +1540,76 @@ function buildBarPanelHtml(title, entries, totalCount, isGold = false) {
     `;
 }
 
+const CHART_COLORS = [
+    "#4f6b5a", // Salbeigrün (deine Hauptfarbe)
+    "#d49d27", // Warmes Gold
+    "#7c9a87", // Helles Salbei
+    "#c97b53", // Terrakotta
+    "#6b8299", // Schieferblau
+    "#9c8265", // Warmes Taupe
+    "#b5a692"  // Sandgrau
+];
+
+function buildDonutPanelHtml(title, entries, totalCount) {
+    if (entries.length === 0 || totalCount === 0) {
+        return `
+            <div class="stats-panel">
+                <h3>${escapeHtml(title)}</h3>
+                <p style="margin: 0; font-size: 13px; color: var(--secondary-text);">Noch keine Daten vorhanden.</p>
+            </div>
+        `;
+    }
+
+    let currentDeg = 0;
+    const gradientParts = [];
+
+    const legendHtml = entries.map((item, idx) => {
+        const color = CHART_COLORS[idx % CHART_COLORS.length];
+        const share = item.count / totalCount;
+        const sharePercent = Math.round(share * 100);
+        const deg = share * 360;
+
+        gradientParts.push(`${color} ${currentDeg.toFixed(1)}deg ${(currentDeg + deg).toFixed(1)}deg`);
+        currentDeg += deg;
+
+        return `
+            <div class="legend-item">
+                <span class="legend-left">
+                    <span class="legend-dot" style="background: ${color};"></span>
+                    <span>${escapeHtml(item.label)}</span>
+                </span>
+                <span class="legend-value">${item.count} (${sharePercent} %)</span>
+            </div>
+        `;
+    }).join("");
+
+    // Falls durch Rundung minimal weniger als 360° erreicht wurden, sauber schließen
+    if (currentDeg < 360 && entries.length > 0) {
+        const lastColor = CHART_COLORS[(entries.length - 1) % CHART_COLORS.length];
+        gradientParts.push(`${lastColor} ${currentDeg.toFixed(1)}deg 360deg`);
+    }
+
+    const gradientCss = `conic-gradient(${gradientParts.join(", ")})`;
+
+    return `
+        <div class="stats-panel">
+            <h3>${escapeHtml(title)}</h3>
+            <div class="donut-layout">
+                <div class="donut-chart" style="background: ${gradientCss};">
+                    <div class="donut-hole">
+                        <span class="donut-total-num">${totalCount}</span>
+                        <span class="donut-total-label">Bücher</span>
+                    </div>
+                </div>
+                <div class="donut-legend">
+                    ${legendHtml}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
 function renderStatisticsPage() {
     if (!statsDashboard) return;
 
@@ -1705,12 +1775,13 @@ function renderStatisticsPage() {
         <div class="stats-charts-grid">
             ${buildBarPanelHtml(selectedYear === "all" ? "Bücher nach Monat (Gesamt)" : `Lesemonate ${selectedYear}`, monthEntries, finishedBooks.length)}
             ${buildBarPanelHtml("Top Genres", genreEntries, finishedBooks.length)}
-            ${buildBarPanelHtml("Fiction vs. Non-Fiction", categoryEntries, finishedBooks.length)}
-            ${buildBarPanelHtml("Formate", formatEntries, finishedBooks.length)}
-            ${buildBarPanelHtml("Sprachen", langEntries, finishedBooks.length)}
+            ${buildDonutPanelHtml("Fiction vs. Non-Fiction", categoryEntries, finishedBooks.length)}
+            ${buildDonutPanelHtml("Formate", formatEntries, finishedBooks.length)}
+            ${buildDonutPanelHtml("Sprachen", langEntries, finishedBooks.length)}
             ${buildBarPanelHtml("Bewertungen", ratingEntries, finishedBooks.length, true)}
-            ${buildBarPanelHtml("Erscheinungsjahrzehnte", decadeEntries, finishedBooks.length)}
+            ${buildDonutPanelHtml("Erscheinungsjahrzehnte", decadeEntries, finishedBooks.length)}
         </div>
+
     `;
 }
 

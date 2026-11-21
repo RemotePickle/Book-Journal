@@ -1323,3 +1323,90 @@ label.checkbox-field input[type="checkbox"] {
         white-space: nowrap;
     }
 }
+
+/* Donut- / Kreisdiagramme auf der Statistikseite */
+.donut-layout {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    flex-wrap: wrap;
+}
+
+.donut-chart {
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.donut-hole {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.donut-total-num {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+}
+
+.donut-total-label {
+    font-size: 11px;
+    color: var(--secondary-text);
+    font-weight: 600;
+}
+
+.donut-legend {
+    flex: 1;
+    min-width: 140px;
+    display: grid;
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.legend-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.legend-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-value {
+    color: var(--secondary-text);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .donut-layout {
+        justify-content: center;
+    }
+}
+
