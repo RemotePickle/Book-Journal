@@ -80,6 +80,7 @@ const tbrView = document.getElementById("tbrView");
 const seriesView = document.getElementById("seriesView");
 const tbrList = document.getElementById("tbrList");
 const seriesOverviewList = document.getElementById("seriesOverviewList");
+const tbrSearchInput = document.getElementById("tbrSearchInput");
 
 const detailsDialog = document.getElementById("detailsDialog");
 const closeDetailsDialogButton = document.getElementById("closeDetailsDialogButton");
@@ -1143,10 +1144,21 @@ function renderBooks() {
 
 
 function updateStats() {
-    document.getElementById("totalBooks").textContent = books.length;
-    document.getElementById("finishedBooks").textContent = books.filter(book => book.status === "finished").length;
-    document.getElementById("wishlistBooks").textContent = books.filter(book => book.status === "wishlist").length;
+    const finishedCount = books.filter(b => b.status === "finished").length;
+    const readingCount = books.filter(b => b.status === "reading").length;
+    const wishlistCount = books.filter(b => b.status === "wishlist").length;
+
+    if (tabBooksButton) {
+        tabBooksButton.textContent = `Gelesene Bücher (${finishedCount})`;
+    }
+    if (tabReadingButton) {
+        tabReadingButton.textContent = `Lese ich (${readingCount})`;
+    }
+    if (tabTbrButton) {
+        tabTbrButton.textContent = `Leseliste (${wishlistCount})`;
+    }
 }
+
 
 // -----------------------------
 // Tab-Umschaltung (Alle Bücher / TBR / Serien)
@@ -1311,14 +1323,19 @@ function getFilteredTbrBooks() {
     const allTbrBooks = books.filter(book => book.status === "wishlist");
     updateTbrGenreOptions(allTbrBooks);
 
+    const tbrSearchTerm = tbrSearchInput ? tbrSearchInput.value.trim().toLowerCase() : "";
     const selectedCategory = tbrCategoryFilter ? tbrCategoryFilter.value : "all";
     const selectedGenre = tbrGenreFilter ? tbrGenreFilter.value : "all";
     const selectedFanfiction = tbrFanfictionFilter ? tbrFanfictionFilter.value : "all";
-
-
-        const selectedTbrSort = tbrSortOrderFilter ? tbrSortOrderFilter.value : "newest";
+    const selectedTbrSort = tbrSortOrderFilter ? tbrSortOrderFilter.value : "newest";
 
     const filtered = allTbrBooks.filter(book => {
+        const matchesSearch =
+            !tbrSearchTerm ||
+            book.title.toLowerCase().includes(tbrSearchTerm) ||
+            (book.author && book.author.toLowerCase().includes(tbrSearchTerm)) ||
+            (book.series && book.series.toLowerCase().includes(tbrSearchTerm));
+
         const matchesCategory =
             selectedCategory === "all" ||
             book.category === selectedCategory;
@@ -1332,8 +1349,9 @@ function getFilteredTbrBooks() {
             (selectedFanfiction === "only" && Boolean(book.isFanfiction)) ||
             (selectedFanfiction === "no" && !book.isFanfiction);
 
-        return matchesCategory && matchesGenre && matchesFanfiction;
+        return matchesSearch && matchesCategory && matchesGenre && matchesFanfiction;
     });
+
 
     filtered.sort((a, b) => {
         if (selectedTbrSort === "release-asc") {
@@ -1537,9 +1555,17 @@ function renderTbrBooks() {
         card.querySelector(".edit-button").addEventListener("click", () => editBook(book.id));
         card.querySelector(".delete-button").addEventListener("click", () => deleteBook(book.id));
 
-        tbrList.appendChild(card);
+                tbrList.appendChild(card);
     });
 }
+
+if (tbrSearchInput) {
+    tbrSearchInput.addEventListener("input", () => {
+        if (randomPickContainer) randomPickContainer.hidden = true;
+        renderTbrBooks();
+    });
+}
+
 
 
 
@@ -1745,10 +1771,14 @@ function renderAuthorsOverview() {
             ? `<button type="button" class="author-tbr-link" data-author="${escapeHtml(author.name)}" title="Leselisten-Bücher ansehen">${tbrCount}</button>`
             : `<span>0</span>`;
 
+        const finishedCellHtml = finishedCount > 0
+            ? `<button type="button" class="author-tbr-link author-finished-link" data-author="${escapeHtml(author.name)}" title="Gelesene Bücher ansehen">${finishedCount}</button>`
+            : `<span>0</span>`;
+
         return `
             <div class="author-row">
-                <span class="author-name">${escapeHtml(author.name)}</span>
-                <span class="author-stat-cell strong">${finishedCount}</span>
+                <button type="button" class="author-name-link" data-author="${escapeHtml(author.name)}">${escapeHtml(author.name)}</button>
+                <span class="author-stat-cell strong">${finishedCellHtml}</span>
                 <span class="author-stat-cell">${avgRatingText}</span>
                 <span class="author-stat-cell">${tbrCellHtml}</span>
             </div>
@@ -1757,7 +1787,28 @@ function renderAuthorsOverview() {
 
     authorsOverviewList.innerHTML = headerHtml + rowsHtml;
 
-    authorsOverviewList.querySelectorAll(".author-tbr-link").forEach(btn => {
+    const showAuthorBooks = (authorName) => {
+        const authorData = authorMap.get(authorName);
+        if (!authorData) return;
+
+        if (authorData.finishedBooks.length > 0) {
+            if (categoryFilter) categoryFilter.value = "all";
+            if (genreFilter) genreFilter.value = "all";
+            if (seriesFilter) seriesFilter.value = "all";
+            if (fanfictionFilter) fanfictionFilter.value = "all";
+            if (searchInput) searchInput.value = authorName;
+            renderBooks();
+            switchView("books");
+        } else if (authorData.tbrBooks.length > 0) {
+            openAuthorTbrBooks(authorName, authorData.tbrBooks);
+        }
+    };
+
+    authorsOverviewList.querySelectorAll(".author-name-link, .author-finished-link").forEach(btn => {
+        btn.addEventListener("click", () => showAuthorBooks(btn.dataset.author));
+    });
+
+    authorsOverviewList.querySelectorAll(".author-tbr-link:not(.author-finished-link)").forEach(btn => {
         btn.addEventListener("click", () => {
             const authorData = authorMap.get(btn.dataset.author);
             if (authorData) {
@@ -1765,6 +1816,7 @@ function renderAuthorsOverview() {
             }
         });
     });
+
 }
 
 if (authorSearchInput) {

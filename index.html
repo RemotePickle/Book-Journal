@@ -57,18 +57,19 @@
 
         <!-- ... HIER BLEIBT DEIN KOMPLETTES <main> UND ALLE <dialog>-ELEMENTE ... -->
 
-    </div> <!-- Schließt #appContainer direkt VOR <script> -->
+    
 
     <main>
         <!-- NEU: Tab-Navigation -->
         <nav class="view-tabs">
-            <button type="button" id="tabBooksButton" class="tab-button active">Alle Bücher</button>
+            <button type="button" id="tabBooksButton" class="tab-button active">Gelesene Bücher</button>
             <button type="button" id="tabReadingButton" class="tab-button">Lese ich</button>
             <button type="button" id="tabTbrButton" class="tab-button">Leseliste</button>
             <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
             <button type="button" id="tabAuthorsButton" class="tab-button">Autorinnen</button>
             <button type="button" id="tabStatsButton" class="tab-button">Statistiken</button>
         </nav>
+
 
         <!-- ANSICHT 1: Deine bisherige Bücher-Ansicht -->
         <section id="booksView">
@@ -99,22 +100,6 @@
                     <option value="author-asc">Autor (A–Z)</option>
                 </select>
             </div>
-
-
-            <section class="stats">
-                <div class="stat-card">
-                    <span class="stat-number" id="totalBooks">0</span>
-                    <span class="stat-label">Bücher</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number" id="finishedBooks">0</span>
-                    <span class="stat-label">Gelesen</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number" id="wishlistBooks">0</span>
-                    <span class="stat-label">Leseliste</span>
-                </div>
-            </section>
 
             <section id="bookList" class="book-grid"></section>
 
@@ -147,6 +132,7 @@
         <!-- NEU: ANSICHT 2: TBR (To Be Read) -->
         <section id="tbrView" hidden>
             <div class="tbr-controls">
+                <input type="search" id="tbrSearchInput" placeholder="Leseliste durchsuchen …">
                 <select id="tbrCategoryFilter">
                     <option value="all">Alle Kategorien</option>
                     <option value="fiction">Fiction</option>
@@ -166,9 +152,9 @@
                     <option value="title-asc">Titel (A–Z)</option>
                     <option value="author-asc">Autor (A–Z)</option>
                 </select>
-
                 <button type="button" id="randomBookButton" class="primary-button">🎲 Zufallsbuch ziehen</button>
             </div>
+
 
 
             <!-- Hier erscheint das ausgeloste Buch -->
@@ -480,7 +466,7 @@
 </dialog>
 
 
-
+</div> <!-- Schließt #appContainer direkt VOR <script> -->
 
     <script type="module" src="./app.js"></script>
 </body>
