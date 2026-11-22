@@ -68,16 +68,6 @@ button {
     opacity: 0.9;
 }
 
-
-/* Suche */
-
-.toolbar {
-    display: grid;
-    grid-template-columns: 1fr 190px 190px;
-    gap: 12px;
-    margin-bottom: 18px;
-}
-
 input,
 select,
 textarea {
@@ -1153,21 +1143,15 @@ label.checkbox-field input[type="checkbox"] {
     cursor: pointer;
 }
 
-/* Erweiterte Filterleisten (5 kompakte Spalten nebeneinander am Desktop) */
-.toolbar {
-    display: grid;
-    grid-template-columns: minmax(150px, 1fr) 150px 140px 160px 175px;
-    gap: 8px;
-    margin-bottom: 18px;
-}
-
+/* Leseliste-Toolbar inkl. Suchfeld (5 Spalten) */
 .tbr-controls {
     display: grid;
-    grid-template-columns: 145px 145px 160px 175px auto;
+    grid-template-columns: minmax(150px, 1.3fr) 150px 150px 180px auto;
     gap: 8px;
     margin-bottom: 20px;
     align-items: center;
 }
+
 
 @media (max-width: 768px) {
     .toolbar,
@@ -1496,10 +1480,10 @@ input[type="date"] {
     }
 }
 
-/* Toolbar in "Alle Bücher" (6 kompakte Spalten nebeneinander am Desktop) */
+/* Toolbar in "Gelesene Bücher" (5 kompakte Spalten nebeneinander am Desktop) */
 .toolbar {
     display: grid;
-    grid-template-columns: minmax(140px, 1.3fr) 140px 140px 140px 155px 165px;
+    grid-template-columns: minmax(150px, 1.4fr) 150px 150px 150px 185px;
     gap: 8px;
     margin-bottom: 18px;
 }
@@ -1660,27 +1644,6 @@ input[type="date"] {
 
     .author-row.header {
         font-size: 10px;
-    }
-}
-
-/* Leseliste-Toolbar inkl. Suchfeld */
-.tbr-controls {
-    display: grid;
-    grid-template-columns: minmax(140px, 1.2fr) 135px 135px 150px 160px auto;
-    gap: 8px;
-    margin-bottom: 20px;
-    align-items: center;
-}
-
-@media (max-width: 960px) {
-    .tbr-controls {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 600px) {
-    .tbr-controls {
-        grid-template-columns: 1fr;
     }
 }
 

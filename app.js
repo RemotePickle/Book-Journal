@@ -102,8 +102,6 @@ const importCsvInput = document.getElementById("importCsvInput");
 const bookStatusInput = document.getElementById("bookStatusInput");
 const releaseDateWrapper = document.getElementById("releaseDateWrapper");
 const releaseYearWrapper = document.getElementById("releaseYearWrapper");
-const fanfictionFilter = document.getElementById("fanfictionFilter");
-const tbrFanfictionFilter = document.getElementById("tbrFanfictionFilter");
 
 const sortOrderFilter = document.getElementById("sortOrderFilter");
 const tbrSortOrderFilter = document.getElementById("tbrSortOrderFilter");
@@ -111,7 +109,7 @@ const tbrSortOrderFilter = document.getElementById("tbrSortOrderFilter");
 const tabStatsButton = document.getElementById("tabStatsButton");
 const statsView = document.getElementById("statsView");
 const statsYearFilter = document.getElementById("statsYearFilter");
-const statsFanfictionFilter = document.getElementById("statsFanfictionFilter");
+const statsMonthFilter = document.getElementById("statsMonthFilter");
 const statsDashboard = document.getElementById("statsDashboard");
 
 const tabAuthorsButton = document.getElementById("tabAuthorsButton");
@@ -313,7 +311,6 @@ bookForm.addEventListener("submit", async (event) => {
         quotes: document.getElementById("quotesInput").value.trim(),
         releaseDate: document.getElementById("releaseDateInput").value,
         releaseYear: Number(document.getElementById("releaseYearInput").value) || 0,
-        isFanfiction: document.getElementById("fanfictionInput").checked,
 
     };
 
@@ -379,7 +376,6 @@ function editBook(id) {
     document.getElementById("quotesInput").value = book.quotes || "";
     document.getElementById("releaseDateInput").value = book.releaseDate || "";
     document.getElementById("releaseYearInput").value = book.releaseYear || "";
-    document.getElementById("fanfictionInput").checked = Boolean(book.isFanfiction);
     updateStatusFieldsVisibility();
 
 
@@ -509,9 +505,6 @@ function showBookDetails(id) {
         metaItems.push({ label: "Beendet am", value: formatGermanDate(book.finishedDate) });
     }
 
-    if (book.isFanfiction) {
-        metaItems.push({ label: "Typ", value: "Fanfiction" });
-    }
     if (book.status === "wishlist" && book.releaseDate) {
         metaItems.push({ label: "Erscheinungsdatum", value: formatGermanDate(book.releaseDate) });
     } else if (book.releaseYear) {
@@ -666,7 +659,7 @@ const CSV_COLUMNS = [
     "id", "cover", "title", "author", "status", "rating", "series", "volume",
     "category", "genre", "format", "pages", "audioHours", "audioMinutes",
     "language", "startDate", "finishedDate", "releaseDate", "releaseYear",
-    "isFanfiction", "notes", "quotes"
+    "notes", "quotes"
 ];
 
 function escapeCsvCell(value) {
@@ -811,7 +804,6 @@ if (importCsvInput) {
                     quotes: rawObj.quotes || "",
                     releaseDate: rawObj.releaseDate || "",
                     releaseYear: Number(rawObj.releaseYear) || 0,
-                    isFanfiction: rawObj.isFanfiction.toLowerCase() === "true",
 
                 });
             }
@@ -942,7 +934,6 @@ function renderBooks() {
     const selectedCategory = categoryFilter ? categoryFilter.value : "all";
     const selectedGenre = genreFilter ? genreFilter.value : "all";
     const selectedSeries = seriesFilter ? seriesFilter.value : "all";
-    const selectedFanfiction = fanfictionFilter ? fanfictionFilter.value : "all";
 
     let filteredBooks = finishedBooksOnly.filter(book => {
         const matchesSearch =
@@ -962,16 +953,11 @@ function renderBooks() {
             selectedSeries === "all" ||
             (book.series && book.series.trim() === selectedSeries);
 
-        const matchesFanfiction =
-            selectedFanfiction === "all" ||
-            (selectedFanfiction === "only" && Boolean(book.isFanfiction)) ||
-            (selectedFanfiction === "no" && !book.isFanfiction);
-
-        return matchesSearch && matchesCategory && matchesGenre && matchesSeries && matchesFanfiction;
+        return matchesSearch && matchesCategory && matchesGenre && matchesSeries;
     });
 
 
-        const selectedSort = sortOrderFilter ? sortOrderFilter.value : "newest";
+        const selectedSort = sortOrderFilter ? sortOrderFilter.value : "finished-desc";
 
     // Wenn eine Serie gewählt ist: Bände automatisch aufsteigend sortieren (Band 1, 2, 3...)
     if (selectedSeries !== "all") {
@@ -1095,7 +1081,6 @@ function renderBooks() {
                 ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
                 ${languageLabel ? `<span class="meta-pill">${escapeHtml(languageLabel)}</span>` : ""}
                 ${lengthLabel ? `<span class="meta-pill">${escapeHtml(lengthLabel)}</span>` : ""}
-                ${book.isFanfiction ? `<span class="meta-pill">Fanfiction</span>` : ""}
                 ${book.releaseYear ? `<span class="meta-pill">${escapeHtml(String(book.releaseYear))}</span>` : ""}
 
             </div>
@@ -1250,7 +1235,6 @@ function renderReadingBooks() {
                 ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
                 ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
                 ${languageLabel ? `<span class="meta-pill">${escapeHtml(languageLabel)}</span>` : ""}
-                ${book.isFanfiction ? `<span class="meta-pill">Fanfiction</span>` : ""}
             </div>
 
             ${seriesText ? `<div class="series">${escapeHtml(seriesText)}</div>` : ""}
@@ -1326,7 +1310,6 @@ function getFilteredTbrBooks() {
     const tbrSearchTerm = tbrSearchInput ? tbrSearchInput.value.trim().toLowerCase() : "";
     const selectedCategory = tbrCategoryFilter ? tbrCategoryFilter.value : "all";
     const selectedGenre = tbrGenreFilter ? tbrGenreFilter.value : "all";
-    const selectedFanfiction = tbrFanfictionFilter ? tbrFanfictionFilter.value : "all";
     const selectedTbrSort = tbrSortOrderFilter ? tbrSortOrderFilter.value : "newest";
 
     const filtered = allTbrBooks.filter(book => {
@@ -1344,12 +1327,8 @@ function getFilteredTbrBooks() {
             selectedGenre === "all" ||
             (book.genre && book.genre.trim() === selectedGenre);
 
-        const matchesFanfiction =
-            selectedFanfiction === "all" ||
-            (selectedFanfiction === "only" && Boolean(book.isFanfiction)) ||
-            (selectedFanfiction === "no" && !book.isFanfiction);
+        return matchesSearch && matchesCategory && matchesGenre;
 
-        return matchesSearch && matchesCategory && matchesGenre && matchesFanfiction;
     });
 
 
@@ -1515,16 +1494,16 @@ function renderTbrBooks() {
             <h3>${escapeHtml(book.title)}</h3>
             ${book.author ? `<p class="author">${escapeHtml(book.author)}</p>` : ""}
 
-            ${
-              (categoryLabel || genreLabel || book.isFanfiction || book.releaseDate)
-                  ? `<div class="card-badges">
-                      ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
-                      ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
-                      ${book.isFanfiction ? `<span class="meta-pill">Fanfiction</span>` : ""}
-                      ${book.releaseDate ? `<span class="meta-pill">Erscheint: ${formatGermanDate(book.releaseDate)}</span>` : ""}
-                     </div>`
-                  : ""
-            }
+        ${
+            (categoryLabel || genreLabel || book.releaseDate)
+                ? `<div class="card-badges">
+                    ${categoryLabel ? `<span class="meta-pill">${escapeHtml(categoryLabel)}</span>` : ""}
+                    ${genreLabel ? `<span class="meta-pill">${escapeHtml(genreLabel)}</span>` : ""}
+                    ${book.releaseDate ? `<span class="meta-pill">Erscheint: ${formatGermanDate(book.releaseDate)}</span>` : ""}
+                   </div>`
+                : ""
+        }
+
 
 
             ${book.notes ? `<p class="notes">${escapeHtml(book.notes)}</p>` : ""}
@@ -1795,7 +1774,6 @@ function renderAuthorsOverview() {
             if (categoryFilter) categoryFilter.value = "all";
             if (genreFilter) genreFilter.value = "all";
             if (seriesFilter) seriesFilter.value = "all";
-            if (fanfictionFilter) fanfictionFilter.value = "all";
             if (searchInput) searchInput.value = authorName;
             renderBooks();
             switchView("books");
@@ -2102,9 +2080,9 @@ function renderStatisticsPage() {
     updateStatsYearOptions();
 
     const selectedYear = statsYearFilter ? statsYearFilter.value : "all";
-    const selectedFf = statsFanfictionFilter ? statsFanfictionFilter.value : "all";
+    const selectedMonth = statsMonthFilter ? statsMonthFilter.value : "all";
 
-    // Basis: Alle gelesenen Bücher (inkl. DNF, falls als gelesen/abgebrochen erfasst)
+    // Basis: Alle gelesenen Bücher (gefiltert nach Jahr und/oder Monat)
     const finishedBooks = books.filter(book => {
         if (book.status !== "finished") return false;
 
@@ -2112,11 +2090,13 @@ function renderStatisticsPage() {
             if (!book.finishedDate || !book.finishedDate.startsWith(selectedYear)) return false;
         }
 
-        if (selectedFf === "only" && !book.isFanfiction) return false;
-        if (selectedFf === "no" && book.isFanfiction) return false;
+        if (selectedMonth !== "all") {
+            if (!book.finishedDate || book.finishedDate.slice(5, 7) !== selectedMonth) return false;
+        }
 
         return true;
     });
+
 
     if (finishedBooks.length === 0) {
         statsDashboard.innerHTML = `
@@ -2176,18 +2156,48 @@ function renderStatisticsPage() {
             .sort((a, b) => b.count - a.count);
     };
 
-    // Monate (1–12)
     const monthNames = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-    const monthCounts = new Array(12).fill(0);
-    finishedBooks.forEach(b => {
-        if (b.finishedDate && b.finishedDate.length >= 7) {
-            const mIdx = parseInt(b.finishedDate.slice(5, 7), 10) - 1;
-            if (mIdx >= 0 && mIdx < 12) monthCounts[mIdx]++;
-        }
-    });
-    const monthEntries = monthNames
-        .map((label, idx) => ({ label, count: monthCounts[idx], customLabel: `${monthCounts[idx]}` }))
-        .filter(m => selectedYear !== "all" || m.count > 0);
+    const fullMonthNames = {
+        "01": "Januar", "02": "Februar", "03": "März", "04": "April",
+        "05": "Mai", "06": "Juni", "07": "Juli", "08": "August",
+        "09": "September", "10": "Oktober", "11": "November", "12": "Dezember"
+    };
+
+    let timeChartTitle = selectedYear === "all" ? "Bücher nach Monat (Gesamt)" : `Lesemonate ${selectedYear}`;
+    let timeChartEntries = [];
+
+    if (selectedMonth !== "all") {
+        const mLabel = fullMonthNames[selectedMonth] || selectedMonth;
+        timeChartTitle = selectedYear === "all" ? `Wochentage (${mLabel}, alle Jahre)` : `Wochentage (${mLabel} ${selectedYear})`;
+        const weekdayNames = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+        const weekdayCounts = new Array(7).fill(0);
+        finishedBooks.forEach(b => {
+            if (b.finishedDate) {
+                const d = new Date(b.finishedDate);
+                if (!isNaN(d)) {
+                    const jsDay = d.getDay(); // 0 = So, 1 = Mo ...
+                    const monIdx = jsDay === 0 ? 6 : jsDay - 1;
+                    weekdayCounts[monIdx]++;
+                }
+            }
+        });
+        timeChartEntries = weekdayNames.map((label, idx) => ({
+            label,
+            count: weekdayCounts[idx],
+            customLabel: `${weekdayCounts[idx]}`
+        }));
+    } else {
+        const monthCounts = new Array(12).fill(0);
+        finishedBooks.forEach(b => {
+            if (b.finishedDate && b.finishedDate.length >= 7) {
+                const mIdx = parseInt(b.finishedDate.slice(5, 7), 10) - 1;
+                if (mIdx >= 0 && mIdx < 12) monthCounts[mIdx]++;
+            }
+        });
+        timeChartEntries = monthNames
+            .map((label, idx) => ({ label, count: monthCounts[idx], customLabel: `${monthCounts[idx]}` }))
+            .filter(m => selectedYear !== "all" || m.count > 0);
+    }
 
     // Genres (Top 8)
     const genreEntries = countBy(finishedBooks, b => (b.genre || "").trim()).slice(0, 8);
@@ -2260,7 +2270,7 @@ function renderStatisticsPage() {
         </div>
 
         <div class="stats-charts-grid">
-            ${buildBarPanelHtml(selectedYear === "all" ? "Bücher nach Monat (Gesamt)" : `Lesemonate ${selectedYear}`, monthEntries, finishedBooks.length)}
+            ${buildBarPanelHtml(timeChartTitle, timeChartEntries, finishedBooks.length)}
             ${buildBarPanelHtml("Top Genres", genreEntries, finishedBooks.length)}
             ${buildDonutPanelHtml("Fiction vs. Non-Fiction", categoryEntries, finishedBooks.length)}
             ${buildDonutPanelHtml("Formate", formatEntries, finishedBooks.length)}
@@ -2269,18 +2279,17 @@ function renderStatisticsPage() {
             ${buildDecadeColumnChartHtml(finishedBooks)}
         </div>
 
+
     `;
 }
 
 if (statsYearFilter) statsYearFilter.addEventListener("change", renderStatisticsPage);
-if (statsFanfictionFilter) statsFanfictionFilter.addEventListener("change", renderStatisticsPage);
-
+if (statsMonthFilter) statsMonthFilter.addEventListener("change", renderStatisticsPage);
 
 searchInput.addEventListener("input", renderBooks);
 if (categoryFilter) categoryFilter.addEventListener("change", renderBooks);
 if (genreFilter) genreFilter.addEventListener("change", renderBooks);
 if (seriesFilter) seriesFilter.addEventListener("change", renderBooks);
-if (fanfictionFilter) fanfictionFilter.addEventListener("change", renderBooks);
 if (sortOrderFilter) sortOrderFilter.addEventListener("change", renderBooks);
 
 
