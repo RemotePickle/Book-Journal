@@ -67,8 +67,10 @@
             <button type="button" id="tabTbrButton" class="tab-button">Leseliste</button>
             <button type="button" id="tabSeriesButton" class="tab-button">Serien-Übersicht</button>
             <button type="button" id="tabAuthorsButton" class="tab-button">Autorinnen</button>
+            <button type="button" id="tabChallengesButton" class="tab-button">Challenges</button>
             <button type="button" id="tabStatsButton" class="tab-button">Statistiken</button>
         </nav>
+
 
 
         <!-- ANSICHT 1: Deine bisherige Bücher-Ansicht -->
@@ -166,6 +168,55 @@
                 <input type="search" id="authorSearchInput" placeholder="Nach Autorin suchen …">
             </div>
             <div id="authorsOverviewList" class="authors-list-card"></div>
+        </section>
+
+                <!-- ANSICHT: CHALLENGES -->
+        <section id="challengesView" hidden>
+            <div class="challenges-toolbar">
+                <select id="challengeYearSelect" aria-label="Challenge-Jahr auswählen"></select>
+            </div>
+
+            <div id="challengesTopRow" class="challenges-top-grid"></div>
+
+            <div class="challenge-block">
+                <div class="challenge-block-header">
+                    <div>
+                        <h2>A–Z Challenge</h2>
+                        <p class="challenge-sub">Führende Artikel werden ignoriert · Zeigt jeweils dein bestbewertetes Buch</p>
+                    </div>
+                    <span id="azProgressBadge" class="series-progress">0 / 26 (0 %)</span>
+                </div>
+                <div id="azGrid" class="az-grid"></div>
+            </div>
+
+            <div id="club52Block" class="challenge-block">
+                <div class="challenge-block-header">
+                    <div>
+                        <h2>The 52 Book Club · 2026</h2>
+                        <p class="challenge-sub">Klicke auf eine Karte, um ein gelesenes Buch aus 2026 zuzuordnen</p>
+                    </div>
+                    <div class="club52-header-controls">
+                        <select id="club52FilterSelect" aria-label="Prompts filtern">
+                            <option value="all">Alle 52 Prompts</option>
+                            <option value="open">Nur offene</option>
+                            <option value="done">Nur erfüllte</option>
+                        </select>
+                        <span id="club52ProgressBadge" class="series-progress">0 / 52 (0 %)</span>
+                    </div>
+                </div>
+                <div id="club52Grid" class="prompt-cards-grid"></div>
+            </div>
+
+            <div class="challenge-block">
+                <div class="challenge-block-header">
+                    <div>
+                        <h2>Lese-Abzeichen</h2>
+                        <p class="challenge-sub">Manuelle Mini-Challenges für das gewählte Jahr – klicke zum Zuweisen eines Buches</p>
+                    </div>
+                    <span id="badgesProgressBadge" class="series-progress">0 / 8 (0 %)</span>
+                </div>
+                <div id="badgesGrid" class="prompt-cards-grid"></div>
+            </div>
         </section>
 
 
@@ -453,6 +504,30 @@
             <button type="button" id="closeAuthorTbrDialogButton" class="icon-button" aria-label="Schließen">×</button>
         </div>
         <ul id="authorTbrBookList" class="author-tbr-modal-list"></ul>
+    </div>
+</dialog>
+
+<!-- Dialog: Passende TBR-Bücher für fehlenden A-Z Buchstaben -->
+<dialog id="azSuggestionDialog">
+    <div class="details-dialog-content">
+        <div class="dialog-header">
+            <h2 id="azSuggestionTitle">Passende Bücher auf deiner Leseliste</h2>
+            <button type="button" id="closeAzSuggestionButton" class="icon-button" aria-label="Schließen">×</button>
+        </div>
+        <ul id="azSuggestionList" class="author-tbr-modal-list"></ul>
+    </div>
+</dialog>
+
+<!-- Dialog: Gelesenes Buch einem Prompt oder Abzeichen zuordnen -->
+<dialog id="challengePickDialog">
+    <div class="details-dialog-content">
+        <div class="dialog-header">
+            <h2 id="challengePickTitle">Buch zuordnen</h2>
+            <button type="button" id="closeChallengePickButton" class="icon-button" aria-label="Schließen">×</button>
+        </div>
+        <p id="challengePickSubtitle" class="delete-dialog-text"></p>
+        <div id="challengePickActionsTop" style="display: flex; justify-content: flex-end;"></div>
+        <ul id="challengePickBookList" class="author-tbr-modal-list"></ul>
     </div>
 </dialog>
 
