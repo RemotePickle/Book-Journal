@@ -1905,8 +1905,9 @@ function renderChallengesPage() {
 
     const subBalance = finishedCount - addedInYearCount;
     let subBadgeHtml = `<span class="pace-badge on-track">⚖️ Ausgeglichen (0)</span>`;
-    if (subBalance > 0) subBadgeHtml = `<span class="pace-badge ahead">📉 SuB um ${subBalance} geschrumpft!</span>`;
-    if (subBalance < 0) subBadgeHtml = `<span class="pace-badge behind">📈 SuB um ${Math.abs(subBalance)} gewachsen</span>`;
+    if (subBalance > 0) subBadgeHtml = `<span class="pace-badge ahead">📉 TBR um ${subBalance} geschrumpft!</span>`;
+    if (subBalance < 0) subBadgeHtml = `<span class="pace-badge behind">📈 TBR um ${Math.abs(subBalance)} gewachsen</span>`;
+
 
     if (challengesTopRow) {
         challengesTopRow.innerHTML = `
@@ -1928,7 +1929,7 @@ function renderChallengesPage() {
             <div class="challenge-section-card">
                 <div class="challenge-section-header">
                     <div>
-                        <h3>⚔️ SuB-Abbau-Duell ${selectedYear}</h3>
+                        <h3>TBR-Abbau ${selectedYear}</h3>
                         <p class="challenge-sub">Gelesene Bücher vs. Neuzugänge in diesem Jahr</p>
                     </div>
                     ${subBadgeHtml}
